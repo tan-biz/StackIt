@@ -34,6 +34,7 @@ export type Database = {
           code: string
           name: string
           mode: 'tournament' | 'open_play'
+          format: 'singles' | 'doubles'
           status: 'waiting' | 'active' | 'completed'
           creator_id: string
           created_at: string
@@ -42,9 +43,11 @@ export type Database = {
           code: string
           name: string
           mode: 'tournament' | 'open_play'
+          format?: 'singles' | 'doubles'
           creator_id: string
         }
         Update: {
+          format?: 'singles' | 'doubles'
           status?: 'waiting' | 'active' | 'completed'
         }
       }
@@ -60,6 +63,24 @@ export type Database = {
           player_id: string
         }
       }
+      tournament_teams: {
+        Row: {
+          id: string
+          game_id: string
+          player1_id: string
+          player2_id: string
+          created_at: string
+        }
+        Insert: {
+          game_id: string
+          player1_id: string
+          player2_id: string
+        }
+        Update: {
+          player1_id?: string
+          player2_id?: string
+        }
+      }
       matches: {
         Row: {
           id: string
@@ -70,6 +91,8 @@ export type Database = {
           team2_player2: string | null
           score_team1: number
           score_team2: number
+          serving_team: 1 | 2
+          server_number: 1 | 2 | null
           winner_team: 1 | 2 | null
           round: number
           status: 'pending' | 'active' | 'completed'

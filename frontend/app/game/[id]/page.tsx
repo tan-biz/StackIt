@@ -15,11 +15,15 @@ export default function GamePage() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'bracket' | 'scoreboard'>('bracket')
+  const [busyAction, setBusyAction] = useState<'leave' | 'delete' | null>(null)
 
   useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push('/'); return }
+      if (!session) {
+        router.push('/')
+        return
+      }
 
       const [{ data: prof }, { data: gameData }, { data: playersData }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', session.user.id).single(),
@@ -32,85 +36,135 @@ export default function GamePage() {
       setPlayers(playersData || [])
       setLoading(false)
     }
+
     load()
 
-    // Realtime subscription
     const channel = supabase
       .channel(`game:${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_players', filter: `game_id=eq.${id}` }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches', filter: `game_id=eq.${id}` }, () => load())
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [id, router])
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="font-display text-3xl text-gradient animate-pulse">Loading game...</div>
-    </div>
-  )
-
-  if (!game) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <p className="text-2xl mb-4">Game not found</p>
-        <button onClick={() => router.push('/dashboard')} className="text-primary underline">Back to Dashboard</button>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="font-display text-3xl text-gradient animate-pulse">Loading game...</div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  if (!game) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-2xl mb-4">Game not found</p>
+          <button onClick={() => router.push('/dashboard')} className="text-primary underline">
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const isCreator = game.creator_id === profile?.id
+
+  const handleLeave = async () => {
+    if (!profile?.id) return
+    setBusyAction('leave')
+    await supabase
+      .from('game_players')
+      .delete()
+      .eq('game_id', id)
+      .eq('player_id', profile.id)
+    router.push('/dashboard')
+  }
+
+  const handleDelete = async () => {
+    setBusyAction('delete')
+    await supabase.from('games').delete().eq('id', id)
+    router.push('/dashboard')
+  }
 
   return (
     <div className="relative z-10 max-w-6xl mx-auto px-5 py-5">
       <Header profile={profile} />
 
       <div className="animate-fade-in">
-        {/* Game Header */}
         <div className="glass rounded-2xl p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-primary text-sm mb-2 transition-colors">
-                ← Back to Dashboard
+                Back to Dashboard
               </button>
               <h1 className="text-3xl font-bold">{game.name}</h1>
-              <div className="flex gap-4 mt-2 text-gray-400 text-sm">
-                <span>{game.mode === 'tournament' ? '🏆 Tournament' : '🎯 Open Play'}</span>
-                <span>👥 {players.length} players</span>
+              <div className="flex gap-4 mt-2 text-gray-400 text-sm flex-wrap">
+                <span>{game.mode === 'tournament' ? 'Tournament' : 'Open Play'}</span>
+                <span>{game.format === 'doubles' ? 'Doubles' : 'Singles'}</span>
+                <span>{players.length} players</span>
                 <span className="font-mono bg-primary/10 text-primary px-2 py-0.5 rounded">#{game.code}</span>
               </div>
+              <div className="flex gap-3 mt-4 flex-wrap">
+                {!isCreator && (
+                  <button
+                    onClick={handleLeave}
+                    disabled={busyAction !== null}
+                    className="px-4 py-2 rounded-xl border border-danger/30 bg-danger/10 text-danger text-sm font-semibold hover:bg-danger/20 transition-all disabled:opacity-50"
+                  >
+                    {busyAction === 'leave' ? 'Leaving...' : 'Leave Game'}
+                  </button>
+                )}
+                {isCreator && (
+                  <button
+                    onClick={handleDelete}
+                    disabled={busyAction !== null}
+                    className="px-4 py-2 rounded-xl border border-danger/30 bg-danger/10 text-danger text-sm font-semibold hover:bg-danger/20 transition-all disabled:opacity-50"
+                  >
+                    {busyAction === 'delete' ? 'Deleting...' : 'Delete Game'}
+                  </button>
+                )}
+              </div>
             </div>
-            <div className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider ${
-              game.status === 'active' ? 'bg-success/20 text-success' :
-              game.status === 'completed' ? 'bg-gray-500/20 text-gray-400' :
-              'bg-secondary/20 text-secondary'
-            }`}>
+            <div
+              className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider ${
+                game.status === 'active'
+                  ? 'bg-success/20 text-success'
+                  : game.status === 'completed'
+                    ? 'bg-gray-500/20 text-gray-400'
+                    : 'bg-secondary/20 text-secondary'
+              }`}
+            >
               {game.status}
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-6">
           {(['bracket', 'scoreboard'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 rounded-xl font-semibold capitalize transition-all ${
-                activeTab === tab
-                  ? 'bg-primary text-dark'
-                  : 'glass text-gray-400 hover:text-white'
+                activeTab === tab ? 'bg-primary text-dark' : 'glass text-gray-400 hover:text-white'
               }`}
             >
-              {tab === 'bracket' ? (game.mode === 'tournament' ? '🏆 Bracket' : '🔄 Rotation') : '📊 Scoreboard'}
+              {tab === 'bracket' ? (game.mode === 'tournament' ? 'Bracket' : 'Rotation') : 'Scoreboard'}
             </button>
           ))}
         </div>
 
         {activeTab === 'bracket' ? (
-          game.mode === 'tournament'
-            ? <TournamentBracket gameId={id as string} players={players} game={game} currentProfile={profile} />
-            : <OpenPlayManager gameId={id as string} players={players} game={game} currentProfile={profile} />
+          game.mode === 'tournament' ? (
+            <TournamentBracket gameId={id as string} players={players} game={game} currentProfile={profile} />
+          ) : (
+            <OpenPlayManager gameId={id as string} players={players} game={game} currentProfile={profile} />
+          )
         ) : (
-          <Scoreboard gameId={id as string} players={players} />
+          <Scoreboard gameId={id as string} players={players} game={game} currentProfile={profile} />
         )}
       </div>
     </div>

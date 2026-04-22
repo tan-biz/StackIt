@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import Header from '@/components/Header'
-import Image from 'next/image'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -16,16 +16,27 @@ export default function ProfilePage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!session) { router.push('/'); return }
+      if (!session) {
+        router.push('/')
+        return
+      }
       const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
-      if (data) { setProfile(data); setName(data.name); setNickname(data.nickname) }
+      if (data) {
+        setProfile(data)
+        setName(data.name)
+        setNickname(data.nickname)
+      }
     })
   }, [router])
 
   const handleSave = async () => {
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+    if (!session) {
+      setSaving(false)
+      return
+    }
+
     const { error } = await supabase.from('profiles').update({ name, nickname }).eq('id', session.user.id)
     setMessage(error ? error.message : 'Profile updated!')
     if (!error) setProfile((p: any) => ({ ...p, name, nickname }))
@@ -36,27 +47,55 @@ export default function ProfilePage() {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
     setUploading(true)
+    setMessage('')
+
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
-
-    const ext = file.name.split('.').pop()
-    const path = `avatars/${session.user.id}.${ext}`
-    const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-
-    if (!uploadErr) {
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', session.user.id)
-      setProfile((p: any) => ({ ...p, avatar_url: publicUrl }))
+    if (!session) {
+      setUploading(false)
+      setMessage('Please sign in again.')
+      return
     }
+
+    const path = `${session.user.id}/avatar`
+    const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file, {
+      upsert: true,
+      contentType: file.type || undefined,
+      cacheControl: '0',
+    })
+
+    if (uploadErr) {
+      setUploading(false)
+      setMessage(uploadErr.message)
+      e.target.value = ''
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    const avatarUrl = `${publicUrl}?t=${Date.now()}`
+    const { error: profileErr } = await supabase
+      .from('profiles')
+      .update({ avatar_url: avatarUrl })
+      .eq('id', session.user.id)
+
+    setMessage(profileErr ? profileErr.message : 'Profile picture updated!')
+    if (!profileErr) {
+      setProfile((p: any) => ({ ...p, avatar_url: avatarUrl }))
+    }
+
     setUploading(false)
+    e.target.value = ''
+    setTimeout(() => setMessage(''), 3000)
   }
 
-  if (!profile) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="font-display text-3xl text-gradient animate-pulse">Loading...</div>
-    </div>
-  )
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="font-display text-3xl text-gradient animate-pulse">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="relative z-10 max-w-2xl mx-auto px-5 py-5">
@@ -64,11 +103,12 @@ export default function ProfilePage() {
 
       <div className="glass rounded-3xl p-8 animate-scale-in">
         <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-primary transition-colors">←</button>
+          <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-primary transition-colors">
+            Back
+          </button>
           <h1 className="text-2xl font-bold">Profile Settings</h1>
         </div>
 
-        {/* Avatar */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative w-28 h-28 mb-4">
             <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-4xl font-bold text-dark overflow-hidden">
@@ -111,7 +151,7 @@ export default function ProfilePage() {
           </div>
 
           {message && (
-            <div className={`rounded-xl px-4 py-3 text-sm ${message.includes('!') ? 'bg-success/10 border border-success/30 text-success' : 'bg-danger/10 border border-danger/30 text-danger'}`}>
+            <div className={`rounded-xl px-4 py-3 text-sm ${message.includes('updated') ? 'bg-success/10 border border-success/30 text-success' : 'bg-danger/10 border border-danger/30 text-danger'}`}>
               {message}
             </div>
           )}
