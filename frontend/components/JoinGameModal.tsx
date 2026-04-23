@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -18,7 +18,6 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
   const scannerRef = useRef<any>(null)
   const scannerContainerId = 'qr-reader'
 
-  // Cleanup scanner on unmount
   useEffect(() => {
     return () => {
       stopScanner()
@@ -30,7 +29,7 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
       try {
         await scannerRef.current.stop()
         scannerRef.current.clear()
-      } catch (e) {
+      } catch {
         // ignore cleanup errors
       }
       scannerRef.current = null
@@ -41,12 +40,9 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
   const startScanner = async () => {
     setError('')
     setScanning(true)
-
-    // Dynamic import to avoid SSR issues
     const { Html5Qrcode } = await import('html5-qrcode')
 
-    // Small delay to let the container render
-    await new Promise(r => setTimeout(r, 100))
+    await new Promise(resolve => setTimeout(resolve, 100))
 
     const scanner = new Html5Qrcode(scannerContainerId)
     scannerRef.current = scanner
@@ -54,38 +50,32 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
     try {
       await scanner.start(
         { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 220, height: 220 },
-          aspectRatio: 1,
-        },
+        { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
         (decodedText: string) => {
-          // Extract code from "STACKIT:XXXXXX" format
           let gameCode = decodedText
           if (decodedText.startsWith('STACKIT:')) {
             gameCode = decodedText.replace('STACKIT:', '')
           }
           gameCode = gameCode.trim().toUpperCase()
-
           setCode(gameCode)
           stopScanner()
-
-          // Auto-join after scan
           handleJoinWithCode(gameCode)
         },
-        () => {
-          // QR code not detected — ignore
-        }
+        () => {}
       )
-    } catch (err: any) {
-      setError('Could not access camera. Please allow camera permissions or enter the code manually.')
+    } catch {
+      setError('Could not access camera. Please allow camera permission or enter the code manually.')
       setScanning(false)
     }
   }
 
   const handleJoinWithCode = async (gameCode: string) => {
     const trimmed = gameCode.trim().toUpperCase()
-    if (!trimmed) { setError('Please enter a game code'); return }
+    if (!trimmed) {
+      setError('Please enter a game code')
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -107,7 +97,6 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
       return
     }
 
-    // Check if already joined
     const { data: existing } = await supabase
       .from('game_players')
       .select('id')
@@ -123,69 +112,65 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
     router.push(`/game/${game.id}`)
   }
 
-  const handleJoin = () => handleJoinWithCode(code)
-
   return (
-    <div className="fixed inset-0 bg-dark/80 backdrop-blur-sm z-50 flex items-center justify-center p-5 animate-fade-in">
-      <div className="glass rounded-3xl p-8 max-w-md w-full animate-slide-up">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Join Game</h2>
-          <button onClick={() => { stopScanner(); onClose() }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:rotate-90">
-            ✕
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-text/30 px-4 py-4 backdrop-blur-sm sm:items-center">
+      <div className="soft-card w-full max-w-md p-5 sm:p-6 animate-slide-up">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-primary">Join a room</p>
+            <h2 className="text-2xl font-black text-text">Join Game</h2>
+          </div>
+          <button
+            onClick={() => {
+              stopScanner()
+              onClose()
+            }}
+            className="secondary-button h-11 w-11 rounded-full p-0"
+          >
+            X
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Game Code</label>
+            <label className="field-label">Game Code</label>
             <input
               type="text"
               value={code}
               onChange={e => setCode(e.target.value.toUpperCase())}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
+              onKeyDown={e => e.key === 'Enter' && handleJoinWithCode(code)}
               placeholder="ABC123"
               maxLength={6}
-              className="w-full px-5 py-5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-display text-3xl text-center tracking-[12px] uppercase"
+              className="field-input font-display text-center text-4xl uppercase tracking-[0.24em]"
             />
           </div>
 
           {error && (
-            <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 text-danger text-sm">
+            <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
               {error}
             </div>
           )}
 
-          <button
-            onClick={handleJoin}
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl uppercase tracking-widest hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-50"
-          >
+          <button onClick={() => handleJoinWithCode(code)} disabled={loading} className="primary-button w-full py-4 text-base">
             {loading ? 'Joining...' : 'Join Game'}
           </button>
 
-          <div className="text-center">
-            <p className="text-gray-500 text-sm mb-3">— or —</p>
-
+          <div className="rounded-[24px] bg-secondary/20 p-4">
+            <p className="text-center text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Camera option</p>
             {scanning ? (
-              <div className="space-y-4">
+              <div className="mt-4 space-y-4">
                 <div
                   id={scannerContainerId}
-                  className="w-full rounded-2xl overflow-hidden border-2 border-primary/30"
-                  style={{ minHeight: '280px' }}
+                  className="overflow-hidden rounded-[24px] border border-primary/15 bg-white"
+                  style={{ minHeight: '260px' }}
                 />
-                <button
-                  onClick={stopScanner}
-                  className="w-full py-3 glass rounded-xl font-semibold hover:bg-white/10 transition-all text-danger"
-                >
-                  ✕ Stop Scanner
+                <button onClick={stopScanner} className="secondary-button w-full text-danger">
+                  Stop Scanner
                 </button>
               </div>
             ) : (
-              <button
-                onClick={startScanner}
-                className="w-full py-3 glass rounded-xl font-semibold hover:bg-white/10 transition-all text-gray-300"
-              >
-                📷 Scan QR Code
+              <button onClick={startScanner} className="secondary-button mt-4 w-full">
+                Scan QR Code
               </button>
             )}
           </div>
@@ -194,4 +179,3 @@ export default function JoinGameModal({ profile, onClose, onJoined }: JoinGameMo
     </div>
   )
 }
-

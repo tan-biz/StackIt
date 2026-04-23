@@ -34,7 +34,7 @@ export default function DashboardPage() {
   if (loading) return <LoadingScreen />
 
   return (
-    <div className="relative z-10 max-w-6xl mx-auto px-5 py-5">
+    <div className="app-shell">
       <Header profile={profile} />
       <Dashboard profile={profile} />
     </div>
@@ -45,7 +45,7 @@ function LoadingScreen() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center animate-fade-in">
-        <div className="font-display text-5xl text-gradient mb-4">STACKIT</div>
+        <div className="font-display mb-4 text-5xl text-gradient">StackIt</div>
         <div className="flex gap-2 justify-center">
           {[0,1,2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce"

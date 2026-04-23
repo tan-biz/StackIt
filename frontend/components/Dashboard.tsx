@@ -24,8 +24,8 @@ export default function Dashboard({ profile }: DashboardProps) {
       .eq('player_id', profile.id)
       .order('joined_at', { ascending: false })
 
-    const g = (data || []).map((d: any) => d.games).filter(Boolean)
-    setGames(g)
+    const joinedGames = (data || []).map((entry: any) => entry.games).filter(Boolean)
+    setGames(joinedGames)
     setLoadingGames(false)
   }
 
@@ -35,55 +35,82 @@ export default function Dashboard({ profile }: DashboardProps) {
 
   const actions = [
     {
-      icon: 'Create',
       title: 'Create Game',
-      desc: 'Start a new game and invite players with a unique code',
+      desc: 'Start a fresh session, get a code, and invite your crew in one tap.',
+      eyebrow: 'Host mode',
       onClick: () => setShowCreate(true),
-      accent: 'from-primary to-primary-dark',
     },
     {
-      icon: 'Join',
       title: 'Join Game',
-      desc: 'Enter a game code or scan QR to join an active game',
+      desc: 'Hop in with a short code or scan a QR when someone already set things up.',
+      eyebrow: 'Quick entry',
       onClick: () => setShowJoin(true),
-      accent: 'from-secondary to-amber-400',
     },
   ]
 
   return (
-    <div className="animate-fade-in">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold mb-2">Welcome back, {profile.nickname}!</h1>
-        <p className="text-gray-400 text-lg">Ready to organize your next pickleball game?</p>
-      </div>
+    <div className="page-stack">
+      <section className="soft-card overflow-hidden p-5 sm:p-6">
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">Good to see you</p>
+            <h1 className="mt-2 text-3xl font-black leading-tight text-text sm:text-4xl">
+              Welcome back, <span className="text-gradient">{profile.nickname}</span>
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-soft sm:text-base">
+              Everything is tuned for quick phone use: fewer taps, clearer cards, and cozy spacing that still stretches nicely on larger screens.
+            </p>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="surface-muted p-4">
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Games</p>
+              <p className="mt-2 text-3xl font-black text-primary">{games.length}</p>
+            </div>
+            <div className="rounded-[24px] bg-accent/25 p-4">
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Style</p>
+              <p className="mt-2 text-lg font-black text-text">Mobile First</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {actions.map(action => (
           <button
             key={action.title}
             onClick={action.onClick}
-            className="glass rounded-2xl p-8 text-left hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10 transition-all group"
+            className="soft-card p-5 text-left transition hover:-translate-y-1"
           >
-            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.accent} flex items-center justify-center text-sm font-bold mb-5 group-hover:scale-110 transition-transform`}>
-              {action.icon}
-            </div>
-            <h3 className="text-xl font-bold mb-2">{action.title}</h3>
-            <p className="text-gray-400 text-sm leading-relaxed">{action.desc}</p>
+            <span className="pill mb-4">{action.eyebrow}</span>
+            <h2 className="text-xl font-black text-text">{action.title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-soft">{action.desc}</p>
+            <span className="mt-5 inline-flex items-center text-sm font-extrabold text-primary">
+              Open
+            </span>
           </button>
         ))}
-      </div>
+      </section>
 
-      <div>
-        <h2 className="text-2xl font-bold mb-5">My Games</h2>
+      <section className="soft-card p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-black text-text">My Games</h2>
+            <p className="mt-1 text-sm text-slate-soft">Your recent rooms and match spaces.</p>
+          </div>
+          <span className="pill">{games.length} total</span>
+        </div>
+
         {loadingGames ? (
           <div className="space-y-3">
-            {[0, 1, 2].map(i => (
-              <div key={i} className="glass rounded-2xl h-20 animate-pulse" style={{ opacity: 1 - i * 0.2 }} />
+            {[0, 1, 2].map(index => (
+              <div key={index} className="h-24 animate-pulse rounded-[24px] bg-secondary/20" />
             ))}
           </div>
         ) : games.length === 0 ? (
-          <div className="glass rounded-2xl p-12 text-center">
-            <p className="text-gray-400">No games yet. Create or join one to get started!</p>
+          <div className="surface-muted p-8 text-center">
+            <p className="text-base font-bold text-text">No games yet</p>
+            <p className="mt-2 text-sm text-slate-soft">Create one or join an existing room to get started.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -91,33 +118,37 @@ export default function Dashboard({ profile }: DashboardProps) {
               <button
                 key={game.id}
                 onClick={() => router.push(`/game/${game.id}`)}
-                className="w-full glass rounded-2xl p-5 flex items-center justify-between hover:border-primary/50 hover:translate-x-1 transition-all group"
+                className="w-full rounded-[24px] border border-primary/10 bg-white/90 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25"
               >
-                <div className="text-left">
-                  <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{game.name}</h4>
-                  <div className="flex gap-4 text-gray-400 text-sm mt-1 flex-wrap">
-                    <span>{game.mode === 'tournament' ? 'Tournament' : 'Open Play'}</span>
-                    <span>{game.format === 'doubles' ? 'Doubles' : 'Singles'}</span>
-                    <span>by {game.profiles?.nickname}</span>
-                    <span>{formatDistanceToNow(new Date(game.created_at), { addSuffix: true })}</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-lg font-black text-text">{game.name}</h3>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-slate-soft">
+                      <span className="pill normal-case tracking-normal">{game.mode === 'tournament' ? 'Tournament' : 'Open Play'}</span>
+                      <span className="pill normal-case tracking-normal">{game.format === 'doubles' ? 'Doubles' : 'Singles'}</span>
+                      <span className="pill normal-case tracking-normal">by {game.profiles?.nickname}</span>
+                    </div>
+                    <p className="mt-3 text-sm text-slate-soft">
+                      Created {formatDistanceToNow(new Date(game.created_at), { addSuffix: true })}
+                    </p>
                   </div>
-                </div>
-                <div
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase ${
-                    game.status === 'active'
-                      ? 'bg-success/20 text-success'
-                      : game.status === 'completed'
-                        ? 'bg-gray-600/30 text-gray-400'
-                        : 'bg-secondary/20 text-secondary'
-                  }`}
-                >
-                  {game.status}
+                  <span
+                    className={`pill shrink-0 ${
+                      game.status === 'active'
+                        ? 'status-live'
+                        : game.status === 'completed'
+                          ? 'status-complete'
+                          : 'status-ready'
+                    }`}
+                  >
+                    {game.status}
+                  </span>
                 </div>
               </button>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       {showCreate && (
         <CreateGameModal

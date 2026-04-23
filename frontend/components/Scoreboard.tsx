@@ -59,117 +59,115 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
 
   const stats = useMemo(() => {
     const playerMap = Object.fromEntries(
-      players.map(p => [
-        p.player_id,
+      players.map(player => [
+        player.player_id,
         {
-          nickname: p.profiles?.nickname || 'Player',
-          avatar_url: p.profiles?.avatar_url || null,
+          nickname: player.profiles?.nickname || 'Player',
+          avatar_url: player.profiles?.avatar_url || null,
         },
       ])
     )
 
     const statsMap: Record<string, { wins: number; losses: number; pointsFor: number; pointsAgainst: number; nickname: string; avatar_url: string | null }> = {}
 
-    players.forEach(p => {
-      statsMap[p.player_id] = {
+    players.forEach(player => {
+      statsMap[player.player_id] = {
         wins: 0,
         losses: 0,
         pointsFor: 0,
         pointsAgainst: 0,
-        nickname: playerMap[p.player_id]?.nickname || 'Player',
-        avatar_url: playerMap[p.player_id]?.avatar_url || null,
+        nickname: playerMap[player.player_id]?.nickname || 'Player',
+        avatar_url: playerMap[player.player_id]?.avatar_url || null,
       }
     })
 
     matches
-      .filter(m => m.status === 'completed')
-      .forEach((m: any) => {
-        const team1 = [m.team1_player1, m.team1_player2].filter(Boolean)
-        const team2 = [m.team2_player1, m.team2_player2].filter(Boolean)
+      .filter(match => match.status === 'completed')
+      .forEach((match: any) => {
+        const team1 = [match.team1_player1, match.team1_player2].filter(Boolean)
+        const team2 = [match.team2_player1, match.team2_player2].filter(Boolean)
 
-        team1.forEach((pid: string) => {
-          if (!statsMap[pid]) return
-          statsMap[pid].pointsFor += m.score_team1
-          statsMap[pid].pointsAgainst += m.score_team2
-          if (m.winner_team === 1) statsMap[pid].wins += 1
-          else statsMap[pid].losses += 1
+        team1.forEach((playerId: string) => {
+          if (!statsMap[playerId]) return
+          statsMap[playerId].pointsFor += match.score_team1
+          statsMap[playerId].pointsAgainst += match.score_team2
+          if (match.winner_team === 1) statsMap[playerId].wins += 1
+          else statsMap[playerId].losses += 1
         })
 
-        team2.forEach((pid: string) => {
-          if (!statsMap[pid]) return
-          statsMap[pid].pointsFor += m.score_team2
-          statsMap[pid].pointsAgainst += m.score_team1
-          if (m.winner_team === 2) statsMap[pid].wins += 1
-          else statsMap[pid].losses += 1
+        team2.forEach((playerId: string) => {
+          if (!statsMap[playerId]) return
+          statsMap[playerId].pointsFor += match.score_team2
+          statsMap[playerId].pointsAgainst += match.score_team1
+          if (match.winner_team === 2) statsMap[playerId].wins += 1
+          else statsMap[playerId].losses += 1
         })
       })
 
     return Object.entries(statsMap)
-      .map(([pid, s]) => ({ pid, ...s }))
+      .map(([playerId, stat]) => ({ playerId, ...stat }))
       .sort((a, b) => b.wins - a.wins || (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst))
   }, [matches, players])
 
   const featuredMatch = useMemo(() => {
     if (matches.length === 0) return null
-    return matches.find(m => m.status === 'active') || matches.find(m => m.status === 'pending') || [...matches].reverse().find(m => m.status === 'completed') || matches[0]
+    return matches.find(match => match.status === 'active') || matches.find(match => match.status === 'pending') || [...matches].reverse().find(match => match.status === 'completed') || matches[0]
   }, [matches])
 
   const supportingMatches = useMemo(() => {
     if (!featuredMatch) return []
-    return matches.filter(m => m.id !== featuredMatch.id).slice(0, 4)
+    return matches.filter(match => match.id !== featuredMatch.id).slice(0, 4)
   }, [featuredMatch, matches])
 
   const updateScore = async (matchId: string, field: 'score_team1' | 'score_team2', delta: number) => {
-    const match = matches.find(m => m.id === matchId)
+    const match = matches.find(item => item.id === matchId)
     if (!match || match.status === 'completed') return
 
-    const newVal = Math.max(0, (match[field] || 0) + delta)
-    const { error } = await supabase.from('matches').update({ [field]: newVal }).eq('id', matchId)
+    const newValue = Math.max(0, (match[field] || 0) + delta)
+    const { error } = await supabase.from('matches').update({ [field]: newValue }).eq('id', matchId)
     if (error) return
 
-    setMatches(prev => prev.map(m => (m.id === matchId ? { ...m, [field]: newVal } : m)))
+    setMatches(prev => prev.map(item => (item.id === matchId ? { ...item, [field]: newValue } : item)))
   }
 
   const updateServer = async (matchId: string, servingTeam: 1 | 2, serverNumber: 1 | 2 | null) => {
-    const match = matches.find(m => m.id === matchId)
+    const match = matches.find(item => item.id === matchId)
     if (!match || match.status === 'completed') return
 
     const payload = { serving_team: servingTeam, server_number: serverNumber }
     const { error } = await supabase.from('matches').update(payload).eq('id', matchId)
     if (error) return
 
-    setMatches(prev => prev.map(m => (m.id === matchId ? { ...m, ...payload } : m)))
+    setMatches(prev => prev.map(item => (item.id === matchId ? { ...item, ...payload } : item)))
   }
 
-  if (loading) return <div className="glass rounded-2xl p-8 text-center text-gray-400">Loading scoreboard...</div>
+  if (loading) return <div className="soft-card p-6 text-center text-slate-soft">Loading scoreboard...</div>
 
   if (matches.length === 0) {
     return (
-      <div className="glass rounded-2xl p-12 text-center">
-        <p className="text-2xl font-display text-gradient mb-3">Broadcast Scoreboard</p>
-        <p className="text-gray-400">Start a match or generate the bracket to show scores here.</p>
+      <div className="soft-card p-8 text-center">
+        <p className="font-display text-4xl text-gradient">Scoreboard</p>
+        <p className="mt-2 text-slate-soft">Start a match or generate the bracket to show scores here.</p>
       </div>
     )
   }
 
-  if (!featuredMatch) {
-    return <div className="glass rounded-2xl p-8 text-center text-gray-400">Loading featured match...</div>
-  }
+  if (!featuredMatch) return <div className="soft-card p-6 text-center text-slate-soft">Loading featured match...</div>
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <section className="glass rounded-[28px] p-4 md:p-6 border border-cyan-400/20 shadow-[0_24px_60px_rgba(0,0,0,0.25)]">
-        <div className="scoreboard-shell rounded-[24px] overflow-hidden">
-          <div className="scoreboard-topbar px-4 py-3 md:px-6 md:py-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+    <div className="page-stack">
+      <section className="soft-card p-3 sm:p-4">
+        <div className="scoreboard-shell overflow-hidden rounded-[26px]">
+          <div className="scoreboard-topbar flex flex-col gap-3 px-4 py-4 sm:px-5">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.35em] text-cyan-200/70">Broadcast Scoreboard</p>
-              <h3 className="font-display text-2xl md:text-3xl">{game.name}</h3>
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">Live view</p>
+              <h3 className="text-2xl font-black text-text">{game.name}</h3>
             </div>
-            <div className="flex items-center gap-3 text-xs md:text-sm flex-wrap">
+            <div className="flex flex-wrap gap-2">
               <StatusPill status={featuredMatch.status} />
               <span className="scoreboard-chip">{isDoubles ? 'Doubles' : 'Singles'}</span>
               <span className="scoreboard-chip">Game #{game.code}</span>
-              <span className="scoreboard-chip">{players.length} Players</span>
+              <span className="scoreboard-chip">{players.length} players</span>
             </div>
           </div>
 
@@ -198,43 +196,41 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
         </section>
       )}
 
-      <section className="glass rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between gap-3">
-          <h3 className="font-bold text-lg">Standings</h3>
-          <span className="text-xs text-gray-500 uppercase tracking-[0.2em]">
-            {isDoubles ? 'Team scoring rules, player standings' : 'Singles scoring and point differential'}
-          </span>
+      <section className="soft-card overflow-hidden">
+        <div className="border-b border-primary/10 px-5 py-4">
+          <h3 className="text-xl font-black text-text">Standings</h3>
+          <p className="mt-1 text-sm text-slate-soft">Wins first, then point differential for sorting.</p>
         </div>
 
-        <div className="divide-y divide-white/5">
-          <div className="px-6 py-3 grid grid-cols-[minmax(0,1.5fr)_60px_60px_80px_80px] text-xs text-gray-500 font-semibold uppercase tracking-wider">
-            <span>Player</span>
-            <span className="text-center">W</span>
-            <span className="text-center">L</span>
-            <span className="text-center">PF</span>
-            <span className="text-center">PA</span>
-          </div>
-
-          {stats.map((s, i) => (
-            <div key={s.pid} className={`px-6 py-4 grid grid-cols-[minmax(0,1.5fr)_60px_60px_80px_80px] items-center gap-2 ${i === 0 && s.wins > 0 ? 'bg-secondary/5' : ''}`}>
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="w-7 text-center text-sm font-bold text-cyan-100/70">#{i + 1}</span>
-                <PlayerAvatar profile={s} size={40} />
-                <div className="min-w-0">
-                  <div className="font-bold truncate">{s.nickname}</div>
-                  {s.wins > 0 && s.losses === 0 && (
-                    <span className="inline-block mt-1 text-[10px] uppercase tracking-[0.2em] bg-success/15 text-success px-2 py-1 rounded-full">
-                      Undefeated
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className="text-center text-success font-bold">{s.wins}</span>
-              <span className="text-center text-danger">{s.losses}</span>
-              <span className="text-center text-gray-300">{s.pointsFor}</span>
-              <span className="text-center text-gray-500">{s.pointsAgainst}</span>
+        <div className="overflow-x-auto">
+          <div className="min-w-[520px]">
+            <div className="grid grid-cols-[minmax(0,1.6fr)_60px_60px_70px_70px] px-5 py-3 text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">
+              <span>Player</span>
+              <span className="text-center">W</span>
+              <span className="text-center">L</span>
+              <span className="text-center">PF</span>
+              <span className="text-center">PA</span>
             </div>
-          ))}
+
+            {stats.map((stat, index) => (
+              <div
+                key={stat.playerId}
+                className={`grid grid-cols-[minmax(0,1.6fr)_60px_60px_70px_70px] items-center gap-2 border-t border-primary/10 px-5 py-4 ${
+                  index === 0 && stat.wins > 0 ? 'bg-accent/10' : 'bg-white/70'
+                }`}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="w-6 text-center text-sm font-black text-primary">#{index + 1}</span>
+                  <PlayerAvatar profile={stat} size={40} />
+                  <span className="truncate font-black text-text">{stat.nickname}</span>
+                </div>
+                <span className="text-center font-black text-primary">{stat.wins}</span>
+                <span className="text-center text-slate-soft">{stat.losses}</span>
+                <span className="text-center text-text">{stat.pointsFor}</span>
+                <span className="text-center text-slate-soft">{stat.pointsAgainst}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </div>
@@ -243,7 +239,7 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
 
 function FeaturedScoreCard({ match, isManager, isDoubles, onUpdateScore, onUpdateServer }: any) {
   return (
-    <div className="scoreboard-main px-3 py-4 md:px-6 md:py-6">
+    <div className="scoreboard-main px-3 py-4 sm:px-5 sm:py-5">
       <ScoreSide
         match={match}
         team="team1"
@@ -253,10 +249,10 @@ function FeaturedScoreCard({ match, isManager, isDoubles, onUpdateScore, onUpdat
         onUpdateScore={onUpdateScore}
         onUpdateServer={onUpdateServer}
       />
-      <div className="scoreboard-center px-3 py-4 md:px-4">
-        <span className="text-[10px] uppercase tracking-[0.3em] text-cyan-100/45">Round {match.round}</span>
+      <div className="scoreboard-center rounded-[24px] bg-primary/6 px-4 py-4">
+        <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Round {match.round}</span>
         <StatusPill status={match.status} />
-        <span className="text-xs text-cyan-100/70">{buildScoreCall(match, isDoubles)}</span>
+        <span className="text-sm font-bold text-slate-soft">{buildScoreCall(match, isDoubles)}</span>
         {isManager && isDoubles && (
           <div className="flex items-center gap-2">
             {[1, 2].map(serverNumber => (
@@ -287,9 +283,9 @@ function FeaturedScoreCard({ match, isManager, isDoubles, onUpdateScore, onUpdat
 
 function CompactScoreCard({ match, isManager, isDoubles, onUpdateScore, onUpdateServer }: any) {
   return (
-    <div className="glass rounded-[22px] p-4 border border-white/10">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs uppercase tracking-[0.25em] text-gray-500">Round {match.round}</span>
+    <div className="soft-card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Round {match.round}</span>
         <StatusPill status={match.status} compact />
       </div>
 
@@ -326,11 +322,11 @@ function ScoreSide({ match, team, profiles, isManager, isDoubles, onUpdateScore,
   const isServing = match.serving_team === servingTeam
 
   return (
-    <div className={`flex flex-col justify-between gap-5 min-w-0 ${align}`}>
-      <div className={`flex items-center gap-4 min-w-0 ${team === 'team2' ? 'flex-row-reverse' : ''}`}>
+    <div className={`flex min-w-0 flex-col justify-between gap-5 rounded-[24px] bg-white/70 p-4 ${align}`}>
+      <div className={`flex min-w-0 items-center gap-3 ${team === 'team2' ? 'flex-row-reverse' : ''}`}>
         <div className={`flex ${isDoubles ? '-space-x-4' : ''}`}>
           {visibleProfiles.map((profile: any, index: number) => (
-            <PlayerAvatar key={index} profile={profile} size={86} large />
+            <PlayerAvatar key={index} profile={profile} size={72} large />
           ))}
         </div>
         <div className="min-w-0">
@@ -341,11 +337,13 @@ function ScoreSide({ match, team, profiles, isManager, isDoubles, onUpdateScore,
               className={`scoreboard-ball ${isServing ? 'scoreboard-ball-active' : ''} ${!isManager || match.status === 'completed' ? 'cursor-default' : ''}`}
               aria-label={`Set ${visibleProfiles.map((profile: any) => profile.nickname).join(' / ')} as server`}
             />
-            <p className="text-[11px] uppercase tracking-[0.35em] text-cyan-100/45">
-              {isServing ? 'Serving Side' : 'Receiving Side'}
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">
+              {isServing ? 'Serving' : 'Receiving'}
             </p>
           </div>
-          <p className="text-2xl md:text-3xl font-black uppercase truncate">{visibleProfiles.map((profile: any) => profile.nickname).join(' / ') || 'Player'}</p>
+          <p className="mt-1 truncate text-2xl font-black text-text">
+            {visibleProfiles.map((profile: any) => profile.nickname).join(' / ') || 'Player'}
+          </p>
         </div>
       </div>
 
@@ -372,7 +370,7 @@ function CompactScoreRow({ match, field, team, profiles, isManager, isDoubles, o
 
   return (
     <div className="flex items-center justify-between gap-3 py-2">
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={() => onUpdateServer(match.id, team, isDoubles ? match.server_number || 1 : null)}
           disabled={!isManager || match.status === 'completed'}
@@ -381,19 +379,19 @@ function CompactScoreRow({ match, field, team, profiles, isManager, isDoubles, o
         />
         <div className={`flex ${isDoubles ? '-space-x-2' : ''}`}>
           {visibleProfiles.map((profile: any, index: number) => (
-            <PlayerAvatar key={index} profile={profile} size={44} />
+            <PlayerAvatar key={index} profile={profile} size={42} />
           ))}
         </div>
-        <span className="font-bold truncate">{visibleProfiles.map((profile: any) => profile.nickname).join(' / ') || 'Player'}</span>
+        <span className="truncate font-black text-text">{visibleProfiles.map((profile: any) => profile.nickname).join(' / ') || 'Player'}</span>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
         {isManager && (
           <button onClick={() => onUpdateScore(match.id, field, -1)} disabled={match.status === 'completed'} className="scoreboard-mini-adjust">
             -
           </button>
         )}
-        <span className="font-display text-3xl text-cyan-200 min-w-12 text-center">{String(match[field] || 0).padStart(2, '0')}</span>
+        <span className="min-w-12 text-center font-display text-3xl text-primary">{String(match[field] || 0).padStart(2, '0')}</span>
         {isManager && (
           <button onClick={() => onUpdateScore(match.id, field, 1)} disabled={match.status === 'completed'} className="scoreboard-mini-adjust scoreboard-mini-adjust-plus">
             +
@@ -406,15 +404,10 @@ function CompactScoreRow({ match, field, team, profiles, isManager, isDoubles, o
 
 function StatusPill({ status, compact = false }: { status: string; compact?: boolean }) {
   const label = status === 'active' ? 'Live' : status === 'completed' ? 'Final' : 'Ready'
-  const className =
-    status === 'active'
-      ? 'bg-emerald-400/15 text-emerald-300 border-emerald-400/25'
-      : status === 'completed'
-        ? 'bg-white/10 text-gray-200 border-white/10'
-        : 'bg-amber-300/15 text-amber-200 border-amber-300/20'
+  const className = status === 'active' ? 'status-live' : status === 'completed' ? 'status-complete' : 'status-ready'
 
   return (
-    <span className={`inline-flex items-center rounded-full border font-semibold uppercase tracking-[0.2em] ${compact ? 'px-2.5 py-1 text-[10px]' : 'px-3 py-1.5 text-[10px]'} ${className}`}>
+    <span className={`pill ${compact ? 'px-2.5 py-1 text-[10px]' : ''} ${className}`}>
       {label}
     </span>
   )
@@ -425,7 +418,7 @@ function PlayerAvatar({ profile, size, large = false }: { profile: PlayerProfile
 
   return (
     <div
-      className={`relative shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-dark ${large ? 'text-2xl' : 'text-sm'}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary font-black text-text ${large ? 'text-xl' : 'text-sm'}`}
       style={{ width: size, height: size }}
     >
       {profile?.avatar_url ? (

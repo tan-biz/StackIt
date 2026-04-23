@@ -15,9 +15,13 @@ export default function OnboardingPage() {
       setError('Please fill in all fields')
       return
     }
+
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { router.push('/'); return }
+    if (!session) {
+      router.push('/')
+      return
+    }
 
     const { error: err } = await supabase.from('profiles').insert({
       id: session.user.id,
@@ -28,51 +32,53 @@ export default function OnboardingPage() {
     if (err) {
       setError(err.message)
       setLoading(false)
-    } else {
-      router.push('/dashboard')
+      return
     }
+
+    router.push('/dashboard')
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen relative z-10 px-5">
-      <div className="glass rounded-3xl p-12 max-w-md w-full animate-scale-in">
-        <div className="font-display text-4xl text-gradient text-center mb-2">STACKIT</div>
-        <p className="text-center text-gray-400 mb-8">Set up your player profile</p>
-
-        <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Full Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="John Doe"
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Nickname</label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={e => setNickname(e.target.value)}
-              placeholder="JD"
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-            <p className="text-xs text-gray-500 mt-1">This is how other players see you</p>
+    <main className="relative z-10 min-h-screen px-4 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
+        <div className="soft-card w-full p-5 sm:p-7 animate-scale-in">
+          <div className="rounded-[28px] bg-secondary/20 p-5">
+            <div className="font-display text-4xl leading-none text-gradient">StackIt</div>
+            <p className="mt-2 text-sm leading-6 text-slate-soft">Let&apos;s set up your player card so you&apos;re ready to join matches fast.</p>
           </div>
 
-          {error && <p className="text-danger text-sm text-center">{error}</p>}
+          <div className="mt-6 space-y-5">
+            <div>
+              <label className="field-label">Full Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Jamie Rivera"
+                className="field-input"
+              />
+            </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl uppercase tracking-widest hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Setting up...' : 'Let\'s Play'}
-          </button>
+            <div>
+              <label className="field-label">Nickname</label>
+              <input
+                type="text"
+                value={nickname}
+                onChange={e => setNickname(e.target.value)}
+                placeholder="Jam"
+                className="field-input"
+              />
+              <p className="mt-2 text-xs text-slate-soft">This name shows up in brackets, queues, and scoreboards.</p>
+            </div>
+
+            {error && <p className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">{error}</p>}
+
+            <button onClick={handleSubmit} disabled={loading} className="primary-button w-full py-4 text-base">
+              {loading ? 'Setting up...' : "Let's Play"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

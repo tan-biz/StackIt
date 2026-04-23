@@ -19,7 +19,10 @@ export default function AuthScreen() {
   const handleAuth = async () => {
     setError('')
     setSuccess('')
-    if (!email || !password) { setError('Please fill in all fields'); return }
+    if (!email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
     if (mode === 'register' && (!fullName.trim() || !nickname.trim())) {
       setError('Please fill in all fields')
       return
@@ -37,125 +40,129 @@ export default function AuthScreen() {
           },
         },
       })
-      if (err) { setError(err.message); setLoading(false); return }
 
-      setSuccess('Account created! Check your email to confirm, then sign in.')
+      if (err) {
+        setError(err.message)
+        setLoading(false)
+        return
+      }
+
+      setSuccess('Account created. Check your email to confirm, then sign in.')
       setLoading(false)
-    } else {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-      if (err) { setError(err.message); setLoading(false) }
-      else router.push('/dashboard')
+      return
     }
+
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    if (err) {
+      setError(err.message)
+      setLoading(false)
+      return
+    }
+
+    router.push('/dashboard')
   }
 
   return (
-    <div className="relative z-10 flex items-center justify-center min-h-screen px-5">
-      <div className="glass rounded-3xl p-12 max-w-md w-full animate-scale-in shadow-2xl">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="font-display text-6xl text-gradient tracking-wider">STACKIT</h1>
-          <p className="text-gray-400 mt-2">Manage your pickleball games with ease</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex glass rounded-xl p-1 mb-8">
-          {(['login', 'register'] as Mode[]).map(m => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setError(''); setSuccess('') }}
-              className={`flex-1 py-2.5 rounded-lg font-semibold capitalize transition-all ${
-                mode === m ? 'bg-primary text-dark' : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {m === 'login' ? 'Sign In' : 'Register'}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          {/* Full Name & Nickname — only shown during registration */}
-          {mode === 'register' && (
-            <>
-              <div>
-                <label className="block text-sm font-semibold text-gray-400 mb-2">Full Name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAuth()}
-                  placeholder="John Doe"
-                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-400 mb-2">Nickname</label>
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={e => setNickname(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAuth()}
-                  placeholder="JD"
-                  className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-                <p className="text-xs text-gray-500 mt-1">This is how other players see you</p>
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAuth()}
-              placeholder="your@email.com"
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAuth()}
-              placeholder="••••••••"
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
+    <main className="relative z-10 min-h-screen px-4 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
+        <div className="soft-card w-full p-5 sm:p-7 animate-scale-in">
+          <div className="surface-muted mb-5 rounded-[28px] p-5">
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">Welcome back</p>
+            <h1 className="font-display text-5xl leading-none text-gradient">StackIt</h1>
+            <p className="mt-2 max-w-xs text-sm leading-6 text-slate-soft">
+              A softer little home for organizing pickleball games on the go.
+            </p>
           </div>
 
-          {error && (
-            <div className="bg-danger/10 border border-danger/30 rounded-xl px-4 py-3 text-danger text-sm">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-success/10 border border-success/30 rounded-xl px-4 py-3 text-success text-sm">
-              {success}
-            </div>
-          )}
+          <div className="mb-5 grid grid-cols-2 gap-2 rounded-[22px] bg-secondary/20 p-1.5">
+            {(['login', 'register'] as Mode[]).map(currentMode => (
+              <button
+                key={currentMode}
+                onClick={() => {
+                  setMode(currentMode)
+                  setError('')
+                  setSuccess('')
+                }}
+                className={`rounded-2xl px-4 py-3 text-sm font-extrabold transition ${
+                  mode === currentMode ? 'bg-white text-text shadow-sm' : 'text-slate-soft'
+                }`}
+              >
+                {currentMode === 'login' ? 'Sign In' : 'Register'}
+              </button>
+            ))}
+          </div>
 
-          <button
-            onClick={handleAuth}
-            disabled={loading}
-            className="w-full py-4 mt-2 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl uppercase tracking-widest hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-dark/30 border-t-dark rounded-full animate-spin" />
-                {mode === 'login' ? 'Signing in...' : 'Creating account...'}
-              </span>
-            ) : (
-              mode === 'login' ? 'Sign In' : 'Create Account'
+          <div className="space-y-4">
+            {mode === 'register' && (
+              <>
+                <div>
+                  <label className="field-label">Full Name</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAuth()}
+                    placeholder="Jamie Rivera"
+                    className="field-input"
+                  />
+                </div>
+                <div>
+                  <label className="field-label">Nickname</label>
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={e => setNickname(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleAuth()}
+                    placeholder="Jam"
+                    className="field-input"
+                  />
+                  <p className="mt-2 text-xs text-slate-soft">This is what other players will see in games.</p>
+                </div>
+              </>
             )}
-          </button>
-        </div>
 
-        <p className="text-center text-gray-500 text-xs mt-8">
-          🏓 Your pickleball game manager
-        </p>
+            <div>
+              <label className="field-label">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAuth()}
+                placeholder="you@example.com"
+                className="field-input"
+              />
+            </div>
+
+            <div>
+              <label className="field-label">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAuth()}
+                placeholder="Enter password"
+                className="field-input"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
+                {success}
+              </div>
+            )}
+
+            <button onClick={handleAuth} disabled={loading} className="primary-button w-full py-4 text-base">
+              {loading ? (mode === 'login' ? 'Signing in...' : 'Creating account...') : mode === 'login' ? 'Sign In' : 'Create Account'}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   )
 }

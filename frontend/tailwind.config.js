@@ -8,15 +8,17 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-racing)', 'sans-serif'],
-        body: ['var(--font-outfit)', 'sans-serif'],
+        display: ['var(--font-display)', 'sans-serif'],
+        body: ['var(--font-body)', 'sans-serif'],
       },
       colors: {
-        primary: '#00D9FF',
-        'primary-dark': '#00A8CC',
-        secondary: '#FFE600',
-        dark: '#0A1828',
-        'dark-alt': '#152238',
+        primary: '#4C9A8A',
+        secondary: '#A4C3B2',
+        accent: '#F6BD60',
+        background: '#F8F9F6',
+        text: '#2F3E46',
+        'slate-soft': '#5F6F76',
+        surface: '#FFFFFF',
         success: '#10B981',
         danger: '#EF4444',
       },

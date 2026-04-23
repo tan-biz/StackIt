@@ -50,7 +50,6 @@ export default function CreateGameModal({ profile, onClose, onCreated }: CreateG
     }
 
     await supabase.from('game_players').insert({ game_id: game.id, player_id: profile.id })
-
     setCreatedGame(game)
     setStep('created')
     setLoading(false)
@@ -79,116 +78,99 @@ export default function CreateGameModal({ profile, onClose, onCreated }: CreateG
   }
 
   return (
-    <div className="fixed inset-0 bg-dark/80 backdrop-blur-sm z-50 flex items-center justify-center p-5 animate-fade-in">
-      <div className="glass rounded-3xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto animate-slide-up">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">{step === 'form' ? 'Create New Game' : 'Game Created!'}</h2>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all hover:rotate-90">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-text/30 px-4 py-4 backdrop-blur-sm sm:items-center">
+      <div className="soft-card max-h-[92vh] w-full max-w-lg overflow-y-auto p-5 sm:p-6 animate-slide-up">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-primary">Host a room</p>
+            <h2 className="text-2xl font-black text-text">{step === 'form' ? 'Create a New Game' : 'Game Created'}</h2>
+          </div>
+          <button onClick={onClose} className="secondary-button h-11 w-11 rounded-full p-0">
             X
           </button>
         </div>
 
         {step === 'form' ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-400 mb-2">Game Name</label>
+              <label className="field-label">Game Name</label>
               <input
                 type="text"
                 value={gameName}
                 onChange={e => setGameName(e.target.value)}
-                placeholder="Friday Night Pickleball"
-                className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                placeholder="Sunset pickleball club"
+                className="field-input"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-400 mb-3">Game Mode</label>
-              <div className="grid grid-cols-2 gap-3">
+              <label className="field-label">Game Mode</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
-                  { value: 'tournament', title: 'Tournament', desc: 'Bracket-style competitive play' },
-                  { value: 'open_play', title: 'Open Play', desc: 'Fair rotation casual play' },
-                ].map(m => (
+                  { value: 'tournament', title: 'Tournament', desc: 'Structured bracket play with match progression.' },
+                  { value: 'open_play', title: 'Open Play', desc: 'Casual rotating rounds for the whole group.' },
+                ].map(option => (
                   <button
-                    key={m.value}
-                    onClick={() => setMode(m.value as 'tournament' | 'open_play')}
-                    className={`p-5 rounded-2xl border-2 text-left transition-all ${
-                      mode === m.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-white/10 bg-white/5 hover:border-white/30'
+                    key={option.value}
+                    onClick={() => setMode(option.value as 'tournament' | 'open_play')}
+                    className={`rounded-[24px] border p-4 text-left transition ${
+                      mode === option.value ? 'border-primary bg-primary/10' : 'border-primary/10 bg-white'
                     }`}
                   >
-                    <div className="font-bold mb-1">{m.title}</div>
-                    <div className="text-xs text-gray-400">{m.desc}</div>
+                    <p className="text-base font-black text-text">{option.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-soft">{option.desc}</p>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-400 mb-3">Match Format</label>
-              <div className="grid grid-cols-2 gap-3">
+              <label className="field-label">Match Format</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
-                  { value: 'singles', title: 'Singles', desc: '1 player per side and 2-number score call' },
-                  { value: 'doubles', title: 'Doubles', desc: '2 players per side and 3-number score call' },
+                  { value: 'singles', title: 'Singles', desc: 'One player per side, simpler scoring flow.' },
+                  { value: 'doubles', title: 'Doubles', desc: 'Two per side, team-first setup and serving.' },
                 ].map(option => (
                   <button
                     key={option.value}
                     onClick={() => setFormat(option.value as 'singles' | 'doubles')}
-                    className={`p-5 rounded-2xl border-2 text-left transition-all ${
-                      format === option.value
-                        ? 'border-secondary bg-secondary/10'
-                        : 'border-white/10 bg-white/5 hover:border-white/30'
+                    className={`rounded-[24px] border p-4 text-left transition ${
+                      format === option.value ? 'border-accent bg-accent/15' : 'border-primary/10 bg-white'
                     }`}
                   >
-                    <div className="font-bold mb-1">{option.title}</div>
-                    <div className="text-xs text-gray-400">{option.desc}</div>
+                    <p className="text-base font-black text-text">{option.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-slate-soft">{option.desc}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            {error && <p className="text-danger text-sm">{error}</p>}
+            {error && (
+              <div className="rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
+                {error}
+              </div>
+            )}
 
-            <button
-              onClick={handleCreate}
-              disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl uppercase tracking-widest hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-50"
-            >
+            <button onClick={handleCreate} disabled={loading} className="primary-button w-full py-4 text-base">
               {loading ? 'Creating...' : 'Create Game'}
             </button>
           </div>
         ) : (
-          <div className="text-center space-y-6">
-            <div className="bg-primary/5 border-2 border-dashed border-primary/50 rounded-2xl p-8">
-              <p className="text-gray-400 text-sm mb-3">Game Code</p>
-              <div className="font-display text-5xl text-primary tracking-[12px] mb-6" style={{ textShadow: '0 0 30px rgba(0,217,255,0.5)' }}>
+          <div className="space-y-5 text-center">
+            <div className="rounded-[28px] border border-primary/15 bg-primary/5 p-5">
+              <p className="text-sm font-bold text-slate-soft">Share this code with players</p>
+              <div className="font-display mt-3 text-5xl leading-none text-primary sm:text-6xl">
                 {createdGame?.code}
               </div>
-              <div ref={qrCanvasRef} className="inline-block p-5 bg-white rounded-2xl">
-                <QRCodeCanvas value={`STACKIT:${createdGame?.code}`} size={240} className="w-full h-auto max-w-[240px]" />
+              <div ref={qrCanvasRef} className="mx-auto mt-5 inline-block rounded-[28px] bg-white p-4 shadow-sm">
+                <QRCodeCanvas value={`STACKIT:${createdGame?.code}`} size={220} className="h-auto w-full max-w-[220px]" />
               </div>
-              <p className="text-gray-500 text-sm mt-4">Share this code or QR with your players</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                onClick={handleCopy}
-                className="py-3 glass rounded-xl font-semibold hover:bg-white/10 transition-all"
-              >
-                Copy Code
-              </button>
-              <button
-                onClick={handleDownloadQr}
-                className="py-3 glass rounded-xl font-semibold hover:bg-white/10 transition-all"
-              >
-                Download QR
-              </button>
-              <button
-                onClick={handleGoToGame}
-                className="py-3 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl hover:-translate-y-0.5 transition-all"
-              >
-                Go to Game
-              </button>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <button onClick={handleCopy} className="secondary-button">Copy Code</button>
+              <button onClick={handleDownloadQr} className="secondary-button">Download QR</button>
+              <button onClick={handleGoToGame} className="primary-button">Go to Game</button>
             </div>
           </div>
         )}

@@ -39,7 +39,7 @@ export default function ProfilePage() {
 
     const { error } = await supabase.from('profiles').update({ name, nickname }).eq('id', session.user.id)
     setMessage(error ? error.message : 'Profile updated!')
-    if (!error) setProfile((p: any) => ({ ...p, name, nickname }))
+    if (!error) setProfile((current: any) => ({ ...current, name, nickname }))
     setSaving(false)
     setTimeout(() => setMessage(''), 3000)
   }
@@ -74,15 +74,10 @@ export default function ProfilePage() {
 
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
     const avatarUrl = `${publicUrl}?t=${Date.now()}`
-    const { error: profileErr } = await supabase
-      .from('profiles')
-      .update({ avatar_url: avatarUrl })
-      .eq('id', session.user.id)
+    const { error: profileErr } = await supabase.from('profiles').update({ avatar_url: avatarUrl }).eq('id', session.user.id)
 
     setMessage(profileErr ? profileErr.message : 'Profile picture updated!')
-    if (!profileErr) {
-      setProfile((p: any) => ({ ...p, avatar_url: avatarUrl }))
-    }
+    if (!profileErr) setProfile((current: any) => ({ ...current, avatar_url: avatarUrl }))
 
     setUploading(false)
     e.target.value = ''
@@ -91,76 +86,70 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="font-display text-3xl text-gradient animate-pulse">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="relative z-10 max-w-2xl mx-auto px-5 py-5">
+    <div className="app-shell">
       <Header profile={profile} />
 
-      <div className="glass rounded-3xl p-8 animate-scale-in">
-        <div className="flex items-center gap-3 mb-8">
-          <button onClick={() => router.push('/dashboard')} className="text-gray-400 hover:text-primary transition-colors">
+      <div className="soft-card mx-auto max-w-2xl p-5 sm:p-6 animate-scale-in">
+        <div className="mb-6 flex items-center gap-2">
+          <button onClick={() => router.push('/dashboard')} className="ghost-button -ml-2">
             Back
           </button>
-          <h1 className="text-2xl font-bold">Profile Settings</h1>
+          <h1 className="text-2xl font-black text-text">Profile Settings</h1>
         </div>
 
-        <div className="flex flex-col items-center mb-10">
-          <div className="relative w-28 h-28 mb-4">
-            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-4xl font-bold text-dark overflow-hidden">
+        <div className="mb-8 rounded-[28px] bg-secondary/20 p-5">
+          <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center sm:gap-5">
+            <div className="relative mb-4 h-28 w-28 shrink-0 overflow-hidden rounded-full bg-secondary text-4xl font-black text-text sm:mb-0">
               {profile.avatar_url ? (
-                <Image src={profile.avatar_url} alt="avatar" width={112} height={112} className="rounded-full object-cover w-full h-full" />
+                <Image src={profile.avatar_url} alt="avatar" fill sizes="112px" className="object-cover" />
               ) : (
-                profile.nickname?.substring(0, 2).toUpperCase()
+                <div className="flex h-full items-center justify-center">
+                  {profile.nickname?.substring(0, 2).toUpperCase()}
+                </div>
+              )}
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-text/40">
+                  <div className="h-7 w-7 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                </div>
               )}
             </div>
-            {uploading && (
-              <div className="absolute inset-0 rounded-full bg-dark/60 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
+
+            <div className="flex-1">
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">Avatar</p>
+              <h2 className="mt-1 text-xl font-black text-text">{profile.nickname}</h2>
+              <label className="primary-button mt-4 cursor-pointer">
+                {uploading ? 'Uploading...' : 'Change Photo'}
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+              </label>
+            </div>
           </div>
-          <label className="cursor-pointer text-primary hover:text-secondary transition-colors text-sm font-semibold">
-            {uploading ? 'Uploading...' : 'Change Photo'}
-            <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-          </label>
         </div>
 
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Full Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
+            <label className="field-label">Full Name</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} className="field-input" />
           </div>
+
           <div>
-            <label className="block text-sm font-semibold text-gray-400 mb-2">Nickname</label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={e => setNickname(e.target.value)}
-              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-            />
+            <label className="field-label">Nickname</label>
+            <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} className="field-input" />
           </div>
 
           {message && (
-            <div className={`rounded-xl px-4 py-3 text-sm ${message.includes('updated') ? 'bg-success/10 border border-success/30 text-success' : 'bg-danger/10 border border-danger/30 text-danger'}`}>
+            <div className={`rounded-2xl px-4 py-3 text-sm ${message.includes('updated') ? 'border border-success/20 bg-success/10 text-success' : 'border border-danger/20 bg-danger/10 text-danger'}`}>
               {message}
             </div>
           )}
 
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-4 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl uppercase tracking-widest hover:-translate-y-0.5 transition-all disabled:opacity-50"
-          >
+          <button onClick={handleSave} disabled={saving} className="primary-button w-full py-4 text-base">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>

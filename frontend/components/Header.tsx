@@ -1,8 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
+import { supabase } from '@/lib/supabase'
 
 interface HeaderProps {
   profile: { name: string; nickname: string; avatar_url: string | null } | null
@@ -11,6 +11,18 @@ interface HeaderProps {
 export default function Header({ profile }: HeaderProps) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -20,50 +32,62 @@ export default function Header({ profile }: HeaderProps) {
   const initials = profile?.nickname?.substring(0, 2).toUpperCase() || '?'
 
   return (
-    <header className="flex justify-between items-center py-5 mb-10 animate-slide-up">
-      <h1
-        className="font-display text-4xl text-gradient tracking-wider cursor-pointer"
+    <header className="mb-5 flex items-center justify-between gap-3 animate-slide-up">
+      <button
         onClick={() => router.push('/dashboard')}
+        className="text-left"
+        aria-label="Go to dashboard"
       >
-        STACKIT
-      </h1>
+        <div className="font-display text-4xl leading-none text-gradient">StackIt</div>
+        <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-soft">
+          Calm pickleball flow
+        </p>
+      </button>
 
-      <div className="relative">
+      <div ref={menuRef} className="relative">
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center gap-3 glass px-3 py-2 rounded-full hover:border-primary/50 transition-all"
+          onClick={() => setMenuOpen(prev => !prev)}
+          className="glass flex min-w-[128px] items-center gap-3 rounded-full px-2.5 py-2 pr-3 transition hover:-translate-y-0.5"
         >
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-dark text-sm overflow-hidden">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-sm font-extrabold text-text">
             {profile?.avatar_url ? (
-              <Image src={profile.avatar_url} alt="avatar" width={36} height={36} className="rounded-full object-cover" />
-            ) : initials}
+              <Image src={profile.avatar_url} alt="avatar" fill sizes="44px" className="object-cover" />
+            ) : (
+              initials
+            )}
           </div>
-          <span className="text-sm font-semibold pr-1">{profile?.nickname || 'Player'}</span>
-          <svg className={`w-4 h-4 text-gray-400 transition-transform ${menuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <div className="min-w-0 text-left">
+            <p className="truncate text-sm font-extrabold text-text">{profile?.nickname || 'Player'}</p>
+            <p className="text-xs text-slate-soft">Menu</p>
+          </div>
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 top-14 glass rounded-2xl p-2 w-48 shadow-2xl z-50 animate-slide-up">
+          <div className="glass absolute right-0 top-14 z-50 w-52 rounded-3xl p-2 shadow-lg animate-slide-up">
             <button
-              onClick={() => { router.push('/profile'); setMenuOpen(false) }}
-              className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 text-sm transition-colors"
+              onClick={() => {
+                router.push('/profile')
+                setMenuOpen(false)
+              }}
+              className="ghost-button w-full justify-start rounded-2xl px-4 py-3"
             >
-              👤 Profile Settings
+              Profile Settings
             </button>
             <button
-              onClick={() => { router.push('/dashboard'); setMenuOpen(false) }}
-              className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 text-sm transition-colors"
+              onClick={() => {
+                router.push('/dashboard')
+                setMenuOpen(false)
+              }}
+              className="ghost-button w-full justify-start rounded-2xl px-4 py-3"
             >
-              🏠 Dashboard
+              Dashboard
             </button>
-            <hr className="border-white/10 my-1" />
+            <div className="mx-2 my-1 h-px bg-primary/10" />
             <button
               onClick={handleLogout}
-              className="w-full text-left px-4 py-3 rounded-xl hover:bg-danger/10 text-danger text-sm transition-colors"
+              className="w-full rounded-2xl px-4 py-3 text-left text-sm font-bold text-danger transition hover:bg-danger/10"
             >
-              🚪 Sign Out
+              Sign Out
             </button>
           </div>
         )}

@@ -324,48 +324,48 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
     await loadData()
   }
 
-  if (loading) return <div className="glass rounded-2xl p-8 text-center text-gray-400">Loading bracket...</div>
+  if (loading) return <div className="soft-card p-8 text-center text-slate-soft">Loading bracket...</div>
 
   if (matches.length === 0) {
     return (
       <div className="animate-fade-in space-y-6">
-        <div className="glass rounded-2xl p-6">
+        <div className="soft-card p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-lg">Players ({players.length})</h3>
             {isCreator && (
               <button
                 onClick={generateBracket}
                 disabled={generating || (isDoubles ? teams.length < 2 : players.length < playersPerMatch)}
-                className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-dark font-bold rounded-xl text-sm hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                className="primary-button"
               >
                 {generating ? 'Generating...' : 'Generate Bracket'}
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {players.map((player: any) => (
-              <PlayerChip key={player.player_id} profile={player.profiles} />
-            ))}
+            <div className="flex flex-wrap gap-2">
+              {players.map((player: any) => (
+                <PlayerChip key={player.player_id} profile={player.profiles} />
+              ))}
           </div>
         </div>
 
         {isDoubles && (
-          <div className="glass rounded-2xl p-6 space-y-5">
+          <div className="soft-card p-5 sm:p-6 space-y-5">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div>
                 <h3 className="font-bold text-lg">Tournament Teams</h3>
-                <p className="text-sm text-gray-400">Creators can create, edit, and remove doubles teams before generating the bracket.</p>
+                <p className="text-sm text-slate-soft">Creators can create, edit, and remove doubles teams before generating the bracket.</p>
               </div>
             </div>
 
             {isCreator && (
               <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto] items-end">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-400 mb-2">Player 1</label>
+                  <label className="field-label">Player 1</label>
                   <select
                     value={selectedPlayer1}
                     onChange={e => setSelectedPlayer1(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                    className="field-select"
                   >
                     <option value="">Select player</option>
                     {availablePlayers.map((player: any) => (
@@ -376,11 +376,11 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-400 mb-2">Player 2</label>
+                  <label className="field-label">Player 2</label>
                   <select
                     value={selectedPlayer2}
                     onChange={e => setSelectedPlayer2(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white"
+                    className="field-select"
                   >
                     <option value="">Select player</option>
                     {availablePlayers.filter((player: any) => player.player_id !== selectedPlayer1).map((player: any) => (
@@ -393,7 +393,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
                 <button
                   onClick={createTeam}
                   disabled={teamSaving || !selectedPlayer1 || !selectedPlayer2 || selectedPlayer1 === selectedPlayer2}
-                  className="px-5 py-3 rounded-xl bg-secondary/20 text-secondary font-bold disabled:opacity-50"
+                  className="secondary-button"
                 >
                   Add Team
                 </button>
@@ -401,17 +401,17 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
             )}
 
             {teams.length === 0 ? (
-              <p className="text-gray-500 text-sm">No teams yet. Create at least 2 doubles teams to generate the tournament bracket.</p>
+              <p className="text-slate-soft text-sm">No teams yet. Create at least 2 doubles teams to generate the tournament bracket.</p>
             ) : (
               <div className="space-y-3">
                 {teams.map(team => {
                   const editablePlayers = availablePlayersForEdit(team.id)
                   const isEditing = editingTeamId === team.id
                   return (
-                    <div key={team.id} className="glass rounded-xl p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div key={team.id} className="rounded-[24px] border border-primary/10 bg-white/85 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-sm">
                       {isEditing ? (
                         <div className="grid gap-3 md:grid-cols-2 flex-1">
-                          <select value={editPlayer1} onChange={e => setEditPlayer1(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          <select value={editPlayer1} onChange={e => setEditPlayer1(e.target.value)} className="field-select">
                             <option value="">Select player</option>
                             {editablePlayers.map((player: any) => (
                               <option key={player.player_id} value={player.player_id}>
@@ -419,7 +419,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
                               </option>
                             ))}
                           </select>
-                          <select value={editPlayer2} onChange={e => setEditPlayer2(e.target.value)} className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
+                          <select value={editPlayer2} onChange={e => setEditPlayer2(e.target.value)} className="field-select">
                             <option value="">Select player</option>
                             {editablePlayers.filter((player: any) => player.player_id !== editPlayer1).map((player: any) => (
                               <option key={player.player_id} value={player.player_id}>
@@ -431,7 +431,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
                       ) : (
                         <div className="flex items-center gap-3 flex-wrap">
                           <TeamBadge profiles={[team.p1, team.p2]} />
-                          <span className="text-sm text-gray-400">Ready for bracket</span>
+                          <span className="text-sm text-slate-soft">Ready for bracket</span>
                         </div>
                       )}
 
@@ -439,15 +439,15 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
                         <div className="flex gap-2 flex-wrap">
                           {isEditing ? (
                             <>
-                              <button onClick={saveTeamEdit} disabled={teamSaving || !editPlayer1 || !editPlayer2 || editPlayer1 === editPlayer2} className="px-4 py-2 rounded-xl bg-primary/20 text-primary font-semibold disabled:opacity-50">
+                              <button onClick={saveTeamEdit} disabled={teamSaving || !editPlayer1 || !editPlayer2 || editPlayer1 === editPlayer2} className="secondary-button disabled:opacity-50">
                                 Save
                               </button>
-                              <button onClick={() => setEditingTeamId(null)} className="px-4 py-2 rounded-xl bg-white/5 text-gray-300 font-semibold">
+                              <button onClick={() => setEditingTeamId(null)} className="secondary-button">
                                 Cancel
                               </button>
                             </>
                           ) : (
-                            <button onClick={() => startEditTeam(team)} className="px-4 py-2 rounded-xl bg-white/5 text-gray-300 font-semibold">
+                            <button onClick={() => startEditTeam(team)} className="secondary-button">
                               Edit
                             </button>
                           )}
@@ -464,8 +464,8 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
           </div>
         )}
 
-        <div className="glass rounded-2xl p-12 text-center">
-          <p className="text-gray-400">
+        <div className="soft-card p-12 text-center">
+          <p className="text-slate-soft">
             {isCreator
               ? isDoubles
                 ? 'Create at least 2 doubles teams, then generate the bracket.'
@@ -484,7 +484,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="glass rounded-2xl p-6">
+      <div className="soft-card p-5 sm:p-6">
         <h3 className="font-bold text-lg mb-3">Players ({players.length})</h3>
         <div className="flex flex-wrap gap-2">
           {players.map((player: any) => (
@@ -494,8 +494,8 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
       </div>
 
       {champion && (
-        <div className="glass rounded-2xl p-6 text-center border-2 border-yellow-500/50 bg-yellow-500/5">
-          <p className="text-sm text-gray-400 uppercase tracking-widest mb-3">Champion</p>
+      <div className="soft-card text-center border-2 border-accent/40 bg-accent/10 p-5 sm:p-6">
+          <p className="mb-3 text-sm uppercase tracking-widest text-slate-soft">Champion</p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
             {champion.map((profile: any, idx: number) => (
               <PlayerAvatar key={idx} profile={profile} size={52} textSize="text-lg" />
@@ -505,7 +505,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
         </div>
       )}
 
-      <div className="glass rounded-2xl p-6 overflow-x-auto">
+      <div className="soft-card p-5 sm:p-6 overflow-x-auto">
         <h3 className="font-bold text-lg mb-4">Tournament Bracket</h3>
         <div className="bracket-container" style={{ minHeight: bracketHeight + 40 }}>
           <div className="bracket-wrapper">
@@ -541,7 +541,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
 
             <div className="bracket-winner" style={{ height: bracketHeight }}>
               <div className="bracket-winner-slot">
-                {champion ? <span className="font-bold text-sm text-center">{champion.map((player: any) => player.nickname).join(' / ')}</span> : <span className="text-xs text-gray-500">WINNER</span>}
+                {champion ? <span className="font-bold text-sm text-center">{champion.map((player: any) => player.nickname).join(' / ')}</span> : <span className="text-xs text-slate-soft">WINNER</span>}
               </div>
             </div>
           </div>
@@ -556,11 +556,11 @@ function BracketMatchCard({ match, isCreator, isDoubles, onUpdateScore, onComple
     return (
       <div className="bracket-match bracket-match-empty">
         <div className="bracket-team">
-          <span className="text-gray-600 text-xs">TBD</span>
+          <span className="text-slate-soft text-xs">TBD</span>
         </div>
         <div className="bracket-divider" />
         <div className="bracket-team">
-          <span className="text-gray-600 text-xs">TBD</span>
+          <span className="text-slate-soft text-xs">TBD</span>
         </div>
       </div>
     )
@@ -648,7 +648,7 @@ function TeamBadge({ profiles }: { profiles: Array<Profile | null | undefined> }
 
 function PlayerChip({ profile }: { profile?: Profile }) {
   return (
-    <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full text-sm font-semibold">
+    <span className="inline-flex items-center gap-2 rounded-full bg-secondary/20 px-3 py-1.5 text-sm font-semibold text-text">
       <PlayerAvatar profile={profile} size={24} textSize="text-[10px]" />
       <span>{profile?.nickname || 'Player'}</span>
     </span>
@@ -660,7 +660,7 @@ function PlayerAvatar({ profile, size, textSize }: { profile?: Profile; size: nu
 
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary font-bold text-dark ${textSize}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary font-bold text-text ${textSize}`}
       style={{ width: size, height: size }}
     >
       {profile?.avatar_url ? (
