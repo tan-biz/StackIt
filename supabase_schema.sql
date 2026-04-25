@@ -28,11 +28,14 @@ CREATE TABLE IF NOT EXISTS public.games (
   format      TEXT NOT NULL DEFAULT 'singles' CHECK (format IN ('singles', 'doubles')),
   status      TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'active', 'completed')),
   creator_id  UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  completed_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.games
 ADD COLUMN IF NOT EXISTS format TEXT NOT NULL DEFAULT 'singles';
+ALTER TABLE public.games
+ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
 
 DO $$
 BEGIN

@@ -141,6 +141,20 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
     setMatches(prev => prev.map(item => (item.id === matchId ? { ...item, ...payload } : item)))
   }
 
+  const downloadResults = () => {
+    const rows = matches.map(match => {
+      const team1 = [match.p1?.nickname, match.p1b?.nickname].filter(Boolean).join(' / ') || 'TBD'
+      const team2 = [match.p2?.nickname, match.p2b?.nickname].filter(Boolean).join(' / ') || 'TBD'
+      return `${match.round},${match.status || 'pending'},"${team1}",${match.score_team1},"${team2}",${match.score_team2}`
+    })
+    const csv = ['Round,Status,Team 1,Score 1,Team 2,Score 2', ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${game.name.replace(/\s+/g, '_').toLowerCase()}-results.csv`
+    link.click()
+  }
+
   if (loading) return <div className="soft-card p-6 text-center text-slate-soft">Loading scoreboard...</div>
 
   if (matches.length === 0) {
@@ -163,11 +177,14 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
               <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">Live view</p>
               <h3 className="text-2xl font-black text-text">{game.name}</h3>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <StatusPill status={featuredMatch.status} />
               <span className="scoreboard-chip">{isDoubles ? 'Doubles' : 'Singles'}</span>
               <span className="scoreboard-chip">Game #{game.code}</span>
               <span className="scoreboard-chip">{players.length} players</span>
+              <button onClick={downloadResults} className="secondary-button">
+                Export results
+              </button>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 
@@ -51,9 +51,18 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null)
   const [editPlayer1, setEditPlayer1] = useState('')
   const [editPlayer2, setEditPlayer2] = useState('')
+  const [downloadLoading, setDownloadLoading] = useState(false)
   const isCreator = game.creator_id === currentProfile?.id
   const isDoubles = game.format === 'doubles'
   const playersPerMatch = isDoubles ? 4 : 2
+  const bracketRef = useRef<HTMLDivElement | null>(null)
+
+  const seedCount = isDoubles ? teams.length : players.length
+  const bracketSeeds = useMemo(() => nextPowerOf2(Math.max(seedCount, 2)), [seedCount])
+  const totalRounds = useMemo(() => {
+    if (matches.length === 0) return 0
+    return Math.log2(bracketSeeds)
+  }, [bracketSeeds, matches.length])
 
   useEffect(() => {
     loadData()
@@ -121,20 +130,39 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
     return groups
   }, [matches])
 
-  const totalRounds = useMemo(() => {
-    if (matches.length === 0) return 0
-    const r1Count = (roundGroups[1] || []).length
-    return Math.ceil(Math.log2(r1Count * 2))
-  }, [matches, roundGroups])
-
   const bracketRounds = useMemo(() => {
     if (matches.length === 0) return []
     const rounds: { round: number; slots: any[] }[] = []
-    const r1Matches = roundGroups[1] || []
-    const bracketSize = nextPowerOf2(r1Matches.length)
+    const firstRoundMatches = roundGroups[1] || []
+    const expectedFirstRoundCount = bracketSeeds / 2
+    const matchedPlayerIds = new Set(
+      firstRoundMatches.flatMap((match: any) => [match.team1_player1, match.team1_player2, match.team2_player1, match.team2_player2].filter(Boolean))
+    )
+    const byePlayers = players
+      .filter(player => !matchedPlayerIds.has(player.player_id))
+      .slice(0, Math.max(0, expectedFirstRoundCount - firstRoundMatches.length))
+      .map(player => ({
+        id: `bye-${player.player_id}`,
+        round: 1,
+        bye: true,
+        status: 'completed',
+        winner_team: 1,
+        score_team1: 1,
+        score_team2: 0,
+        team1_player1: player.player_id,
+        p1: player.profiles,
+        team2_player1: 'BYE',
+        p2: { nickname: 'BYE' },
+      }))
 
-    for (let round = 1; round <= totalRounds; round++) {
-      const expectedCount = bracketSize / Math.pow(2, round - 1)
+    const round1Slots = [...firstRoundMatches, ...byePlayers]
+    while (round1Slots.length < expectedFirstRoundCount) {
+      round1Slots.push({ id: `tbd-1-${round1Slots.length}`, empty: true, round: 1 })
+    }
+    rounds.push({ round: 1, slots: round1Slots })
+
+    for (let round = 2; round <= totalRounds; round++) {
+      const expectedCount = bracketSeeds / Math.pow(2, round)
       const actualMatches = roundGroups[round] || []
       const slots: any[] = []
       for (let i = 0; i < expectedCount; i++) {
@@ -143,7 +171,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
       rounds.push({ round, slots })
     }
     return rounds
-  }, [matches, roundGroups, totalRounds])
+  }, [matches, roundGroups, bracketSeeds, totalRounds, players])
 
   const champion = useMemo(() => {
     if (bracketRounds.length === 0) return null
@@ -151,6 +179,38 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
     if (!finalMatch || finalMatch.empty || finalMatch.status !== 'completed') return null
     return finalMatch.winner_team === 1 ? [finalMatch.p1, finalMatch.p1b].filter(Boolean) : [finalMatch.p2, finalMatch.p2b].filter(Boolean)
   }, [bracketRounds])
+
+  const downloadBracketImage = async () => {
+    if (!bracketRef.current) return
+    setDownloadLoading(true)
+    try {
+      const { toPng } = await import('html-to-image')
+      const dataUrl = await toPng(bracketRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
+      const link = document.createElement('a')
+      link.href = dataUrl
+      link.download = `${game.name.replace(/\s+/g, '_').toLowerCase()}-bracket.png`
+      link.click()
+    } catch (error) {
+      console.error('Bracket export failed', error)
+    } finally {
+      setDownloadLoading(false)
+    }
+  }
+
+  const downloadResultsCsv = () => {
+    const rows = matches.map(match => {
+      const team1 = [match.p1?.nickname, match.p1b?.nickname].filter(Boolean).join(' / ') || 'TBD'
+      const team2 = [match.p2?.nickname, match.p2b?.nickname].filter(Boolean).join(' / ') || 'TBD'
+      const status = match.status || 'pending'
+      return `${match.round},${status},"${team1}",${match.score_team1},"${team2}",${match.score_team2}`
+    })
+    const csv = ['Round,Status,Team 1,Score 1,Team 2,Score 2', ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `${game.name.replace(/\s+/g, '_').toLowerCase()}-results.csv`
+    link.click()
+  }
 
   const createTeam = async () => {
     if (!selectedPlayer1 || !selectedPlayer2 || selectedPlayer1 === selectedPlayer2) return
@@ -203,9 +263,12 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
 
     if (isDoubles) {
       const shuffledTeams = shuffle(teams)
+      const bracketSize = nextPowerOf2(shuffledTeams.length)
+      const byeCount = bracketSize - shuffledTeams.length
+      const playCount = Math.max(0, (shuffledTeams.length - byeCount) / 2)
       const matchInserts = []
 
-      for (let i = 0; i < shuffledTeams.length; i += 2) {
+      for (let i = 0; i < playCount * 2; i += 2) {
         const team1 = shuffledTeams[i]
         const team2 = shuffledTeams[i + 1]
         if (!team1 || !team2) continue
@@ -229,27 +292,36 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
         await supabase.from('matches').insert(matchInserts)
         await supabase.from('games').update({ status: 'active' }).eq('id', gameId)
       }
+
+      if (byeCount > 0 && matchInserts.length === 0) {
+        await supabase.from('games').update({ status: 'active' }).eq('id', gameId)
+      }
     } else {
       const playerIds = shuffle(players.map(player => player.player_id))
+      const bracketSize = nextPowerOf2(playerIds.length)
+      const byeCount = bracketSize - playerIds.length
+      const playCount = Math.max(0, (playerIds.length - byeCount) / 2)
       const matchInserts = []
-      for (let i = 0; i < playerIds.length; i += 2) {
-        if (i + 1 < playerIds.length) {
-          matchInserts.push({
-            game_id: gameId,
-            team1_player1: playerIds[i],
-            team2_player1: playerIds[i + 1],
-            score_team1: 0,
-            score_team2: 0,
-            serving_team: 1,
-            server_number: null,
-            round: 1,
-            status: 'pending',
-          })
-        }
+
+      for (let i = 0; i < playCount * 2; i += 2) {
+        matchInserts.push({
+          game_id: gameId,
+          team1_player1: playerIds[i],
+          team2_player1: playerIds[i + 1],
+          score_team1: 0,
+          score_team2: 0,
+          serving_team: 1,
+          server_number: null,
+          round: 1,
+          status: 'pending',
+        })
       }
 
       if (matchInserts.length > 0) {
         await supabase.from('matches').insert(matchInserts)
+      }
+
+      if (playerIds.length > 0) {
         await supabase.from('games').update({ status: 'active' }).eq('id', gameId)
       }
     }
@@ -506,8 +578,31 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
       )}
 
       <div className="soft-card p-5 sm:p-6 overflow-x-auto">
-        <h3 className="font-bold text-lg mb-4">Tournament Bracket</h3>
-        <div className="bracket-container" style={{ minHeight: bracketHeight + 40 }}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-bold text-lg">Tournament Bracket</h3>
+            <p className="text-sm text-slate-soft">Download the bracket image or the match results after every round.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={downloadBracketImage}
+              disabled={downloadLoading || matches.length === 0}
+              className="secondary-button"
+            >
+              {downloadLoading ? 'Exporting…' : 'Download bracket'}
+            </button>
+            <button
+              type="button"
+              onClick={downloadResultsCsv}
+              disabled={matches.length === 0}
+              className="secondary-button"
+            >
+              Download results
+            </button>
+          </div>
+        </div>
+        <div className="bracket-container" style={{ minHeight: bracketHeight + 40 }} ref={bracketRef}>
           <div className="bracket-wrapper">
             {bracketRounds.map((round, roundIndex) => (
               <div key={round.round} className="bracket-round-group">
@@ -561,6 +656,20 @@ function BracketMatchCard({ match, isCreator, isDoubles, onUpdateScore, onComple
         <div className="bracket-divider" />
         <div className="bracket-team">
           <span className="text-slate-soft text-xs">TBD</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (match.bye) {
+    return (
+      <div className="bracket-match bracket-match-done">
+        <div className="bracket-team">
+          <span className="font-semibold text-sm truncate">{match.p1?.nickname || 'Player'}</span>
+        </div>
+        <div className="bracket-divider" />
+        <div className="bracket-team">
+          <span className="text-slate-soft text-xs">BYE</span>
         </div>
       </div>
     )

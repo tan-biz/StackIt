@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit'
 import gamesRouter from './routes/games'
 import profilesRouter from './routes/profiles'
 import matchesRouter from './routes/matches'
+import courtRegistrationRouter from './routes/courtRegistration'
 
 dotenv.config()
 
@@ -33,6 +34,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/games', gamesRouter)
 app.use('/api/profiles', profilesRouter)
 app.use('/api/matches', matchesRouter)
+app.use('/api/court-registration', courtRegistrationRouter)
 
 // 404 handler
 app.use((_req, res) => {

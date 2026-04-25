@@ -104,15 +104,32 @@ router.patch('/:id/status', authMiddleware, async (req: AuthRequest, res: Respon
   if (!game) return res.status(404).json({ error: 'Game not found' })
   if (game.creator_id !== req.userId) return res.status(403).json({ error: 'Forbidden' })
 
+  const updatePayload: any = { status }
+  if (status === 'completed') updatePayload.completed_at = new Date().toISOString()
+  else updatePayload.completed_at = null
+
   const { data, error } = await supabase
     .from('games')
-    .update({ status })
+    .update(updatePayload)
     .eq('id', req.params.id)
     .select()
     .single()
 
   if (error) return res.status(500).json({ error: error.message })
   res.json({ game: data })
+})
+
+router.delete('/cleanup', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+  const { error } = await supabase
+    .from('games')
+    .delete()
+    .eq('creator_id', req.userId)
+    .eq('status', 'completed')
+    .lt('completed_at', fiveDaysAgo)
+
+  if (error) return res.status(500).json({ error: error.message })
+  res.json({ deleted: true })
 })
 
 export default router

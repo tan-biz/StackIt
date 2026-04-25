@@ -125,7 +125,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => setShowAuth(false)}
-                  className="ghost-button"
+                  className="primary-button rounded-[24px] px-4 py-2 text-sm"
                 >
                   Close
                 </button>

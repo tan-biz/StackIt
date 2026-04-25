@@ -38,6 +38,7 @@ export type Database = {
           status: 'waiting' | 'active' | 'completed'
           creator_id: string
           created_at: string
+          completed_at: string | null
         }
         Insert: {
           code: string
@@ -49,6 +50,7 @@ export type Database = {
         Update: {
           format?: 'singles' | 'doubles'
           status?: 'waiting' | 'active' | 'completed'
+          completed_at?: string | null
         }
       }
       game_players: {

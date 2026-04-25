@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import CreateGameModal from './CreateGameModal'
 import JoinGameModal from './JoinGameModal'
+import CourtRegistrationModal from './CourtRegistrationModal'
 
 interface DashboardProps {
   profile: { id: string; name: string; nickname: string }
@@ -14,6 +15,7 @@ export default function Dashboard({ profile }: DashboardProps) {
   const router = useRouter()
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
+  const [showCourtRegistration, setShowCourtRegistration] = useState(false)
   const [games, setGames] = useState<any[]>([])
   const [loadingGames, setLoadingGames] = useState(true)
 
@@ -25,8 +27,19 @@ export default function Dashboard({ profile }: DashboardProps) {
       .order('joined_at', { ascending: false })
 
     const joinedGames = (data || []).map((entry: any) => entry.games).filter(Boolean)
-    setGames(joinedGames)
+    const cutoff = Date.now() - 5 * 24 * 60 * 60 * 1000
+    const visibleGames = joinedGames.filter((game: any) => {
+      if (game.status !== 'completed') return true
+      const endedAt = game.completed_at || game.created_at
+      return new Date(endedAt).getTime() >= cutoff
+    })
+
+    setGames(visibleGames)
     setLoadingGames(false)
+  }
+
+  const handleCourtRegistration = () => {
+    setShowCourtRegistration(true)
   }
 
   useEffect(() => {
@@ -45,6 +58,12 @@ export default function Dashboard({ profile }: DashboardProps) {
       desc: 'Hop in with a short code or scan a QR when someone already set things up.',
       eyebrow: 'Quick entry',
       onClick: () => setShowJoin(true),
+    },
+    {
+      title: 'Register a Court',
+      desc: 'Tell us about your place so nearby players can find and book it.',
+      eyebrow: 'Court listing',
+      onClick: handleCourtRegistration,
     },
   ]
 
@@ -170,6 +189,10 @@ export default function Dashboard({ profile }: DashboardProps) {
             loadGames()
           }}
         />
+      )}
+
+      {showCourtRegistration && (
+        <CourtRegistrationModal onClose={() => setShowCourtRegistration(false)} />
       )}
     </div>
   )
