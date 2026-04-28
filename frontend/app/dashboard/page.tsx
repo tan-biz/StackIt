@@ -45,7 +45,10 @@ function LoadingScreen() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center animate-fade-in">
-        <div className="font-display mb-4 text-5xl text-gradient">StackIt</div>
+        <div className="font-display mb-4 text-5xl">
+          <span className="text-gradient">Stack</span>
+          <span className="text-accent">It</span>
+        </div>
         <div className="flex gap-2 justify-center">
           {[0,1,2].map(i => (
             <div key={i} className="w-2 h-2 rounded-full bg-primary animate-bounce"

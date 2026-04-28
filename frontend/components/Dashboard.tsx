@@ -5,7 +5,6 @@ import { formatDistanceToNow } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import CreateGameModal from './CreateGameModal'
 import JoinGameModal from './JoinGameModal'
-import CourtRegistrationModal from './CourtRegistrationModal'
 
 interface DashboardProps {
   profile: { id: string; name: string; nickname: string }
@@ -15,9 +14,12 @@ export default function Dashboard({ profile }: DashboardProps) {
   const router = useRouter()
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
-  const [showCourtRegistration, setShowCourtRegistration] = useState(false)
   const [games, setGames] = useState<any[]>([])
+  const [courtsCount, setCourtsCount] = useState(0)
   const [loadingGames, setLoadingGames] = useState(true)
+
+  const hour = new Date().getHours()
+  const timeGreeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
 
   const loadGames = async () => {
     const { data } = await supabase
@@ -38,12 +40,25 @@ export default function Dashboard({ profile }: DashboardProps) {
     setLoadingGames(false)
   }
 
-  const handleCourtRegistration = () => {
-    setShowCourtRegistration(true)
+  const loadCourtsCount = async () => {
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4001'
+      const response = await fetch(`${backendUrl}/api/court-registration`)
+      if (!response.ok) {
+        setCourtsCount(0)
+        return
+      }
+
+      const data = await response.json()
+      setCourtsCount(Array.isArray(data) ? data.length : 0)
+    } catch {
+      setCourtsCount(0)
+    }
   }
 
   useEffect(() => {
     loadGames()
+    loadCourtsCount()
   }, [profile.id])
 
   const actions = [
@@ -59,12 +74,6 @@ export default function Dashboard({ profile }: DashboardProps) {
       eyebrow: 'Quick entry',
       onClick: () => setShowJoin(true),
     },
-    {
-      title: 'Register a Court',
-      desc: 'Tell us about your place so nearby players can find and book it.',
-      eyebrow: 'Court listing',
-      onClick: handleCourtRegistration,
-    },
   ]
 
   return (
@@ -72,9 +81,9 @@ export default function Dashboard({ profile }: DashboardProps) {
       <section className="soft-card overflow-hidden p-5 sm:p-6">
         <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">Good to see you</p>
+            <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">Ready to play</p>
             <h1 className="mt-2 text-3xl font-black leading-tight text-text sm:text-4xl">
-              Welcome back, <span className="text-gradient">{profile.nickname}</span>
+              {timeGreeting}, <span className="text-gradient">{profile.nickname}</span>
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-soft sm:text-base">
               Everything is tuned for quick phone use: fewer taps, clearer cards, and cozy spacing that still stretches nicely on larger screens.
@@ -87,8 +96,8 @@ export default function Dashboard({ profile }: DashboardProps) {
               <p className="mt-2 text-3xl font-black text-primary">{games.length}</p>
             </div>
             <div className="rounded-[24px] bg-accent/25 p-4">
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Style</p>
-              <p className="mt-2 text-lg font-black text-text">Mobile First</p>
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-soft">Pickleball Courts</p>
+              <p className="mt-2 text-3xl font-black text-text">{courtsCount}</p>
             </div>
           </div>
         </div>
@@ -189,10 +198,6 @@ export default function Dashboard({ profile }: DashboardProps) {
             loadGames()
           }}
         />
-      )}
-
-      {showCourtRegistration && (
-        <CourtRegistrationModal onClose={() => setShowCourtRegistration(false)} />
       )}
     </div>
   )

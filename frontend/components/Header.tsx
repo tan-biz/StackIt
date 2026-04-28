@@ -29,7 +29,7 @@ export default function Header({ profile }: HeaderProps) {
     router.push('/')
   }
 
-  const initials = profile?.nickname?.substring(0, 2).toUpperCase() || '?'
+  const avatarSrc = profile?.avatar_url || '/default-avatar.jpg'
 
   return (
     <header className="mb-5 flex items-center justify-between gap-3 animate-slide-up">
@@ -38,7 +38,10 @@ export default function Header({ profile }: HeaderProps) {
         className="text-left"
         aria-label="Go to dashboard"
       >
-        <div className="font-display text-4xl leading-none text-gradient">StackIt</div>
+        <div className="font-display text-4xl leading-none">
+          <span className="text-gradient">Stack</span>
+          <span className="text-accent">It</span>
+        </div>
         <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-soft">
           Calm pickleball flow
         </p>
@@ -50,11 +53,7 @@ export default function Header({ profile }: HeaderProps) {
           className="glass flex min-w-[128px] items-center gap-3 rounded-full px-2.5 py-2 pr-3 transition hover:-translate-y-0.5"
         >
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary text-sm font-extrabold text-text">
-            {profile?.avatar_url ? (
-              <Image src={profile.avatar_url} alt="avatar" fill sizes="44px" className="object-cover" />
-            ) : (
-              initials
-            )}
+            <Image src={avatarSrc} alt="avatar" fill sizes="44px" className="object-cover" />
           </div>
           <div className="min-w-0 text-left">
             <p className="truncate text-sm font-extrabold text-text">{profile?.nickname || 'Player'}</p>
@@ -72,6 +71,15 @@ export default function Header({ profile }: HeaderProps) {
               className="ghost-button w-full justify-start rounded-2xl px-4 py-3"
             >
               Profile Settings
+            </button>
+            <button
+              onClick={() => {
+                router.push('/courts')
+                setMenuOpen(false)
+              }}
+              className="ghost-button w-full justify-start rounded-2xl px-4 py-3"
+            >
+              Courts
             </button>
             <button
               onClick={() => {

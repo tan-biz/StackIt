@@ -66,8 +66,10 @@ export default function AuthScreen() {
     <div className="w-full">
       <div className="soft-card w-full p-5 sm:p-7 animate-scale-in">
         <div className="surface-muted mb-5 rounded-[28px] p-5">
-          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-primary">Welcome back</p>
-          <h1 className="font-display text-4xl leading-tight text-gradient sm:text-5xl">StackIt</h1>
+          <h1 className="font-display text-4xl leading-tight sm:text-5xl">
+            <span className="text-gradient">Stack</span>
+            <span className="text-accent">It</span>
+          </h1>
           <p className="mt-2 max-w-xs text-sm leading-6 text-slate-soft">
             Enter your details to keep the games rolling, or join the crew with a playful twist.
           </p>

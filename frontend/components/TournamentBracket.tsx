@@ -588,17 +588,34 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
               type="button"
               onClick={downloadBracketImage}
               disabled={downloadLoading || matches.length === 0}
-              className="secondary-button"
+              className="secondary-button h-11 w-11 rounded-xl p-0"
+              title={downloadLoading ? 'Exporting bracket...' : 'Download bracket'}
+              aria-label={downloadLoading ? 'Exporting bracket...' : 'Download bracket'}
             >
-              {downloadLoading ? 'Exporting…' : 'Download bracket'}
+              {downloadLoading ? (
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M12 3v12" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M5 21h14" />
+                </svg>
+              )}
             </button>
             <button
               type="button"
               onClick={downloadResultsCsv}
               disabled={matches.length === 0}
-              className="secondary-button"
+              className="secondary-button h-11 w-11 rounded-xl p-0"
+              title="Download results"
+              aria-label="Download results"
             >
-              Download results
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <rect x="4" y="3" width="16" height="18" rx="2" />
+                <path d="M8 8h8" />
+                <path d="M8 12h8" />
+                <path d="M8 16h5" />
+              </svg>
             </button>
           </div>
         </div>
@@ -765,18 +782,15 @@ function PlayerChip({ profile }: { profile?: Profile }) {
 }
 
 function PlayerAvatar({ profile, size, textSize }: { profile?: Profile; size: number; textSize: string }) {
-  const initials = profile?.nickname?.slice(0, 2).toUpperCase() || '?'
+  const avatarSrc = profile?.avatar_url || '/default-avatar.jpg'
 
   return (
     <div
       className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary font-bold text-text ${textSize}`}
       style={{ width: size, height: size }}
     >
-      {profile?.avatar_url ? (
-        <Image src={profile.avatar_url} alt={profile.nickname || 'Player avatar'} fill sizes={`${size}px`} className="object-cover" />
-      ) : (
-        initials
-      )}
+      <Image src={avatarSrc} alt={profile?.nickname || 'Player avatar'} fill sizes={`${size}px`} className="object-cover" />
     </div>
   )
 }
+

@@ -98,8 +98,15 @@ export default function ProfilePage() {
 
       <div className="soft-card mx-auto max-w-2xl p-5 sm:p-6 animate-scale-in">
         <div className="mb-6 flex items-center gap-2">
-          <button onClick={() => router.push('/dashboard')} className="ghost-button -ml-2">
-            Back
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="secondary-button -ml-1 h-11 w-11 rounded-xl p-0"
+            aria-label="Back to Dashboard"
+            title="Back to Dashboard"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
           <h1 className="text-2xl font-black text-text">Profile Settings</h1>
         </div>
@@ -107,13 +114,7 @@ export default function ProfilePage() {
         <div className="mb-8 rounded-[28px] bg-secondary/20 p-5">
           <div className="flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-center sm:gap-5">
             <div className="relative mb-4 h-28 w-28 shrink-0 overflow-hidden rounded-full bg-secondary text-4xl font-black text-text sm:mb-0">
-              {profile.avatar_url ? (
-                <Image src={profile.avatar_url} alt="avatar" fill sizes="112px" className="object-cover" />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  {profile.nickname?.substring(0, 2).toUpperCase()}
-                </div>
-              )}
+              <Image src={profile.avatar_url || '/default-avatar.jpg'} alt="avatar" fill sizes="112px" className="object-cover" />
               {uploading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-text/40">
                   <div className="h-7 w-7 rounded-full border-2 border-white border-t-transparent animate-spin" />

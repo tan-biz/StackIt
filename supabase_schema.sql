@@ -109,6 +109,39 @@ BEGIN
   END IF;
 END $$;
 
+-- Court Places
+CREATE TABLE IF NOT EXISTS public.court_places (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name        TEXT NOT NULL,
+  location    TEXT NOT NULL,
+  court_count INT NOT NULL,
+  court_names TEXT NOT NULL,
+  maps_url    TEXT,
+  image_url   TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.court_places
+ADD COLUMN IF NOT EXISTS image_url TEXT;
+
+-- Court Registration Requests (admin approval queue)
+CREATE TABLE IF NOT EXISTS public.court_registration_requests (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name            TEXT NOT NULL,
+  location        TEXT NOT NULL,
+  court_count     INT NOT NULL,
+  court_names     TEXT NOT NULL,
+  maps_url        TEXT,
+  image_url       TEXT,
+  image_file_name TEXT,
+  status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  reviewed_at     TIMESTAMPTZ
+);
+
+ALTER TABLE public.court_registration_requests
+ADD COLUMN IF NOT EXISTS image_url TEXT;
+
 -- ============================================================
 -- INDEXES
 -- ============================================================
@@ -119,6 +152,7 @@ CREATE INDEX IF NOT EXISTS idx_game_players_game ON public.game_players(game_id)
 CREATE INDEX IF NOT EXISTS idx_game_players_player ON public.game_players(player_id);
 CREATE INDEX IF NOT EXISTS idx_matches_game ON public.matches(game_id);
 CREATE INDEX IF NOT EXISTS idx_tournament_teams_game ON public.tournament_teams(game_id);
+CREATE INDEX IF NOT EXISTS idx_court_registration_requests_status ON public.court_registration_requests(status);
 
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS)

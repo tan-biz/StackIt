@@ -8,6 +8,7 @@ interface ScoreboardProps {
   players: any[]
   game: any
   currentProfile: any
+  tvMode?: boolean
 }
 
 type PlayerProfile = {
@@ -20,10 +21,11 @@ const EMPTY_PROFILE: PlayerProfile = {
   avatar_url: null,
 }
 
-export default function Scoreboard({ gameId, players, game, currentProfile }: ScoreboardProps) {
+export default function Scoreboard({ gameId, players, game, currentProfile, tvMode = false }: ScoreboardProps) {
   const [matches, setMatches] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const isManager = game.creator_id === currentProfile?.id
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const isManager = !tvMode && game.creator_id === currentProfile?.id
   const isDoubles = game.format === 'doubles'
 
   useEffect(() => {
@@ -56,6 +58,15 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
       supabase.removeChannel(channel)
     }
   }, [gameId])
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement))
+    }
+
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
 
   const stats = useMemo(() => {
     const playerMap = Object.fromEntries(
@@ -155,11 +166,25 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
     link.click()
   }
 
-  if (loading) return <div className="soft-card p-6 text-center text-slate-soft">Loading scoreboard...</div>
+  const openTvMode = () => {
+    window.open(`/game/${gameId}/tv`, '_blank')
+  }
+
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen()
+      return
+    }
+    await document.exitFullscreen()
+  }
+
+  if (loading) {
+    return <div className={`${tvMode ? 'min-h-screen' : ''} soft-card p-6 text-center text-slate-soft`}>Loading scoreboard...</div>
+  }
 
   if (matches.length === 0) {
     return (
-      <div className="soft-card p-8 text-center">
+      <div className={`${tvMode ? 'min-h-screen' : ''} soft-card p-8 text-center`}>
         <p className="font-display text-4xl text-gradient">Scoreboard</p>
         <p className="mt-2 text-slate-soft">Start a match or generate the bracket to show scores here.</p>
       </div>
@@ -167,6 +192,40 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
   }
 
   if (!featuredMatch) return <div className="soft-card p-6 text-center text-slate-soft">Loading featured match...</div>
+
+  if (tvMode) {
+    return (
+      <div className="min-h-screen">
+        <section className="soft-card h-full p-3 sm:p-4 xl:p-6">
+          <div className="scoreboard-shell h-full overflow-hidden rounded-[26px]">
+            <div className="scoreboard-topbar flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">TV Mode</p>
+                <h3 className="text-2xl font-black text-text xl:text-3xl">{game.name}</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusPill status={featuredMatch.status} />
+                <span className="scoreboard-chip">{isDoubles ? 'Doubles' : 'Singles'}</span>
+                <span className="scoreboard-chip">Game #{game.code}</span>
+                <button onClick={toggleFullscreen} className="secondary-button">
+                  {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                </button>
+              </div>
+            </div>
+
+            <FeaturedScoreCard
+              match={featuredMatch}
+              isManager={false}
+              isDoubles={isDoubles}
+              onUpdateScore={updateScore}
+              onUpdateServer={updateServer}
+              tvMode
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className="page-stack">
@@ -182,6 +241,9 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
               <span className="scoreboard-chip">{isDoubles ? 'Doubles' : 'Singles'}</span>
               <span className="scoreboard-chip">Game #{game.code}</span>
               <span className="scoreboard-chip">{players.length} players</span>
+              <button onClick={openTvMode} className="secondary-button">
+                TV Mode
+              </button>
               <button onClick={downloadResults} className="secondary-button">
                 Export results
               </button>
@@ -256,7 +318,7 @@ export default function Scoreboard({ gameId, players, game, currentProfile }: Sc
 
 function FeaturedScoreCard({ match, isManager, isDoubles, onUpdateScore, onUpdateServer }: any) {
   return (
-    <div className="scoreboard-main px-3 py-4 sm:px-5 sm:py-5">
+    <div className="scoreboard-main px-3 py-4 sm:px-5 sm:py-5 xl:px-8 xl:py-8">
       <ScoreSide
         match={match}
         team="team1"
@@ -431,18 +493,14 @@ function StatusPill({ status, compact = false }: { status: string; compact?: boo
 }
 
 function PlayerAvatar({ profile, size, large = false }: { profile: PlayerProfile; size: number; large?: boolean }) {
-  const initials = profile?.nickname?.slice(0, 2).toUpperCase() || '?'
+  const avatarSrc = profile?.avatar_url || '/default-avatar.jpg'
 
   return (
     <div
       className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-secondary font-black text-text ${large ? 'text-xl' : 'text-sm'}`}
       style={{ width: size, height: size }}
     >
-      {profile?.avatar_url ? (
-        <Image src={profile.avatar_url} alt={profile.nickname || 'Player avatar'} fill sizes={`${size}px`} className="object-cover" />
-      ) : (
-        initials
-      )}
+      <Image src={avatarSrc} alt={profile?.nickname || 'Player avatar'} fill sizes={`${size}px`} className="object-cover" />
     </div>
   )
 }

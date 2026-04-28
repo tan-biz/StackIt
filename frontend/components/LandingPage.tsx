@@ -47,11 +47,11 @@ export default function LandingPage() {
       <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-8 lg:grid-cols-[1.4fr_1fr] items-center">
         <section className="order-2 space-y-8 lg:order-1">
           <div className="soft-card rounded-[36px] border border-primary/10 bg-white/90 p-8 shadow-[0_24px_60px_rgba(76,154,138,0.14)]">
-            <span className="pill">Pickleball planning with a smile</span>
+            <span className="pill">Pickleball planning</span>
             <div className="mt-6 max-w-2xl space-y-5">
-              <h1 className="font-display text-5xl tracking-tight text-text sm:text-6xl">StackIt makes every game easy, bright, and fun.</h1>
+              <h1 className="font-display text-5xl tracking-tight text-text sm:text-6xl">Organize games. Not group chats.</h1>
               <p className="text-lg leading-8 text-slate-soft">
-                Build friendly games, invite players, and track courts without the noise. Everything is wrapped in a warm, soft UI made for quick play and easy organizing.
+                StackIt handles scheduling, invites, courts, and scores — so you can focus on playing, not coordinating.
               </p>
             </div>
 
@@ -101,9 +101,9 @@ export default function LandingPage() {
           <div className="soft-card rounded-[36px] border border-primary/10 bg-white/95 p-6 shadow-[0_24px_60px_rgba(76,154,138,0.16)]">
             <div className="mb-6 rounded-[28px] bg-secondary/10 p-5">
               <p className="text-xs font-extrabold uppercase tracking-[0.24em] text-primary">Welcome home</p>
-              <h2 className="mt-3 text-3xl font-display tracking-tight text-text">Sign in or join the StackIt family</h2>
+              <h2 className="mt-3 text-3xl font-display tracking-tight text-text">Sign in or create your account</h2>
               <p className="mt-2 text-sm leading-6 text-slate-soft">
-                Start managing games, invites, and scores with a cute, calm dashboard built for people who love to play.
+                Manage games, invites, and scores from your personal dashboard.
               </p>
             </div>
             <AuthScreen />

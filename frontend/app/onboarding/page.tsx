@@ -27,6 +27,7 @@ export default function OnboardingPage() {
       id: session.user.id,
       name: name.trim(),
       nickname: nickname.trim(),
+      avatar_url: '/default-avatar.jpg',
     })
 
     if (err) {
@@ -43,7 +44,10 @@ export default function OnboardingPage() {
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center">
         <div className="soft-card w-full p-5 sm:p-7 animate-scale-in">
           <div className="rounded-[28px] bg-secondary/20 p-5">
-            <div className="font-display text-4xl leading-none text-gradient">StackIt</div>
+            <div className="font-display text-4xl leading-none">
+              <span className="text-gradient">Stack</span>
+              <span className="text-accent">It</span>
+            </div>
             <p className="mt-2 text-sm leading-6 text-slate-soft">Let&apos;s set up your player card so you&apos;re ready to join matches fast.</p>
           </div>
 

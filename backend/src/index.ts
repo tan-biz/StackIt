@@ -13,11 +13,25 @@ import courtRegistrationRouter from './routes/courtRegistration'
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 4000
+const PORT = process.env.PORT || 4001
+const configuredFrontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'
+const allowedOrigins = new Set([configuredFrontendOrigin, 'http://localhost:3000', 'http://localhost:3001'])
 
 // Middleware
 app.use(helmet())
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }))
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) {
+        callback(null, true)
+        return
+      }
+
+      callback(new Error('Not allowed by CORS'))
+    },
+    credentials: true,
+  })
+)
 app.use(morgan('dev'))
 app.use(express.json())
 

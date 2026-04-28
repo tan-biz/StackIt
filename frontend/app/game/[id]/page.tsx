@@ -99,8 +99,15 @@ export default function GamePage() {
         <section className="soft-card p-5 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <button onClick={() => router.push('/dashboard')} className="ghost-button -ml-2 mb-2">
-                Back to Dashboard
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="secondary-button -ml-1 mb-2 h-11 w-11 rounded-xl p-0"
+                aria-label="Back to Dashboard"
+                title="Back to Dashboard"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
               </button>
               <h1 className="text-3xl font-black text-text sm:text-4xl">{game.name}</h1>
               <div className="mt-3 flex flex-wrap gap-2">
