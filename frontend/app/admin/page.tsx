@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface CourtRequest {
   id: string
@@ -117,7 +118,7 @@ export default function AdminPage() {
     rejectRequest()
   }
 
-  if (loading) return <div className="p-4">Loading...</div>
+  if (loading) return <LoadingScreen />
   if (error) return <div className="p-4 text-red-500">{error}</div>
 
   return (

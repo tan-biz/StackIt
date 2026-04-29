@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface TournamentBracketProps {
   gameId: string
@@ -396,7 +397,7 @@ export default function TournamentBracket({ gameId, players, game, currentProfil
     await loadData()
   }
 
-  if (loading) return <div className="soft-card p-8 text-center text-slate-soft">Loading bracket...</div>
+  if (loading) return <div className="soft-card"><LoadingScreen inline /></div>
 
   if (matches.length === 0) {
     return (

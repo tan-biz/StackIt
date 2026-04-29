@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface OpenPlayManagerProps {
   gameId: string
@@ -113,7 +114,7 @@ export default function OpenPlayManager({ gameId, players, game, currentProfile 
   const completedMatches = useMemo(() => matches.filter(match => match.status === 'completed'), [matches])
   const playerMap = Object.fromEntries(players.map(player => [player.player_id, player.profiles?.nickname]))
 
-  if (loading) return <div className="soft-card p-6 text-center text-slate-soft">Loading...</div>
+  if (loading) return <div className="soft-card"><LoadingScreen inline /></div>
 
   return (
     <div className="page-stack">

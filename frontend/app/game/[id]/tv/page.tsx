@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Scoreboard from '@/components/Scoreboard'
+import LoadingScreen from '@/components/LoadingScreen'
 
 export default function GameTvPage() {
   const { id } = useParams()
@@ -37,11 +38,7 @@ export default function GameTvPage() {
   }, [id, router])
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="font-display text-3xl text-gradient animate-pulse">Loading TV view...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (!game) {

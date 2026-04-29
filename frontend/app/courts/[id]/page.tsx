@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface CourtDetail {
   id: string
@@ -49,11 +50,7 @@ export default function CourtDetailPage({ params }: CourtDetailPageProps) {
   }, [params.id])
 
   if (loading) {
-    return (
-      <main className="app-shell">
-        <div className="soft-card p-6 text-sm text-slate-soft">Loading court details...</div>
-      </main>
-    )
+    return <LoadingScreen />
   }
 
   if (error || !court) {

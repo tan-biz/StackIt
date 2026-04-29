@@ -1,8 +1,3 @@
--- ============================================================
--- STACKIT - Supabase PostgreSQL Schema
--- Run this in the Supabase SQL Editor
--- ============================================================
-
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import Header from '@/components/Header'
+import LoadingScreen from '@/components/LoadingScreen'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -85,11 +86,7 @@ export default function ProfilePage() {
   }
 
   if (!profile) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="font-display text-3xl text-gradient animate-pulse">Loading...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   return (

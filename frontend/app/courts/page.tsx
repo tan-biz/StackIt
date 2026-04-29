@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
+import LoadingScreen from '@/components/LoadingScreen';
 import CourtRegistrationModal from '@/components/CourtRegistrationModal';
 
 interface Court {
@@ -80,11 +81,7 @@ export default function CourtsPage() {
   );
 
   if (profileLoading) {
-    return (
-      <main className="app-shell">
-        <div className="soft-card p-6 text-sm text-slate-soft">Loading...</div>
-      </main>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -134,7 +131,21 @@ export default function CourtsPage() {
         </section>
 
         {loading ? (
-          <section className="soft-card p-6 text-sm text-slate-soft">Loading registered courts...</section>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="soft-card block overflow-hidden p-2">
+                {/* image placeholder */}
+                <div className="skeleton-base h-44 w-full rounded-2xl sm:h-48" />
+                {/* text lines */}
+                <div className="p-3 space-y-2">
+                  <div className="skeleton-base h-6 w-3/4 rounded-lg" />
+                  <div className="skeleton-base h-4 w-full rounded-lg" />
+                  <div className="skeleton-base h-4 w-2/3 rounded-lg" />
+                  <div className="skeleton-base mt-3 h-6 w-28 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </section>
         ) : error ? (
           <section className="soft-card border border-danger/20 bg-danger/5 p-6 text-sm text-danger">{error}</section>
         ) : filteredCourts.length === 0 ? (

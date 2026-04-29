@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
+import LoadingScreen from '@/components/LoadingScreen'
 
 interface ScoreboardProps {
   gameId: string
@@ -179,7 +180,7 @@ export default function Scoreboard({ gameId, players, game, currentProfile, tvMo
   }
 
   if (loading) {
-    return <div className={`${tvMode ? 'min-h-screen' : ''} soft-card p-6 text-center text-slate-soft`}>Loading scoreboard...</div>
+    return tvMode ? <LoadingScreen /> : <div className="soft-card"><LoadingScreen inline /></div>
   }
 
   if (matches.length === 0) {
@@ -191,7 +192,7 @@ export default function Scoreboard({ gameId, players, game, currentProfile, tvMo
     )
   }
 
-  if (!featuredMatch) return <div className="soft-card p-6 text-center text-slate-soft">Loading featured match...</div>
+  if (!featuredMatch) return <div className="soft-card"><LoadingScreen inline /></div>
 
   if (tvMode) {
     return (
