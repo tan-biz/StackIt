@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { QRCodeCanvas } from 'qrcode.react'
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react'
 import { supabase } from '@/lib/supabase'
 
 interface CreateGameModalProps {
@@ -11,6 +11,16 @@ interface CreateGameModalProps {
 }
 
 type Step = 'form' | 'created'
+type GameMode = 'tournament' | 'open_play'
+type MatchFormat = 'singles' | 'doubles'
+
+interface CreatedGame {
+  id: string
+  code: string
+  name: string
+  mode: GameMode
+  format: MatchFormat
+}
 
 function generateCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
@@ -20,12 +30,13 @@ export default function CreateGameModal({ profile, onClose, onCreated }: CreateG
   const router = useRouter()
   const [step, setStep] = useState<Step>('form')
   const [gameName, setGameName] = useState('')
-  const [mode, setMode] = useState<'tournament' | 'open_play'>('tournament')
-  const [format, setFormat] = useState<'singles' | 'doubles'>('singles')
+  const [mode, setMode] = useState<GameMode>('tournament')
+  const [format, setFormat] = useState<MatchFormat>('singles')
   const [loading, setLoading] = useState(false)
-  const [createdGame, setCreatedGame] = useState<any>(null)
+  const [createdGame, setCreatedGame] = useState<CreatedGame | null>(null)
   const [error, setError] = useState('')
   const qrCanvasRef = useRef<HTMLDivElement>(null)
+  const qrDownloadRef = useRef<HTMLCanvasElement>(null)
 
   const handleCreate = async () => {
     if (!gameName.trim()) {
@@ -49,32 +60,42 @@ export default function CreateGameModal({ profile, onClose, onCreated }: CreateG
       return
     }
 
-    await supabase.from('game_players').insert({ game_id: game.id, player_id: profile.id })
-    setCreatedGame(game)
+    const { error: playerErr } = await supabase
+      .from('game_players')
+      .insert({ game_id: game.id, player_id: profile.id })
+
+    if (playerErr) {
+      setError(playerErr.message)
+      setLoading(false)
+      return
+    }
+
+    setCreatedGame(game as CreatedGame)
     setStep('created')
     setLoading(false)
   }
 
   const handleGoToGame = () => {
+    if (!createdGame) return
     onCreated()
     router.push(`/game/${createdGame.id}`)
   }
 
   const handleCopy = () => {
+    if (!createdGame) return
     navigator.clipboard.writeText(createdGame.code)
   }
 
   const handleDownloadQr = () => {
-    const canvas = qrCanvasRef.current?.querySelector('canvas')
-    if (!canvas || !createdGame?.code) return
-
+    if (!createdGame?.code) return
+    // Read directly from the hidden QRCodeCanvas — instant, no SVG parsing needed
+    const canvas = qrDownloadRef.current as unknown as HTMLCanvasElement | null
+    if (!canvas) return
     const url = canvas.toDataURL('image/png')
     const link = document.createElement('a')
     link.href = url
     link.download = `stackit-${createdGame.code}-qr.png`
-    document.body.appendChild(link)
     link.click()
-    document.body.removeChild(link)
   }
 
   return (
@@ -162,8 +183,14 @@ export default function CreateGameModal({ profile, onClose, onCreated }: CreateG
               <div className="font-display mt-3 text-5xl leading-none text-primary sm:text-6xl">
                 {createdGame?.code}
               </div>
-              <div ref={qrCanvasRef} className="mx-auto mt-5 inline-block rounded-[28px] bg-white p-4 shadow-sm">
-                <QRCodeCanvas value={`STACKIT:${createdGame?.code}`} size={220} className="h-auto w-full max-w-[220px]" />
+              <div ref={qrCanvasRef} className="mx-auto mt-5 inline-block rounded-[28px] bg-white p-5 shadow-sm">
+                <QRCodeSVG
+                  value={`STACKIT:${createdGame?.code}`}
+                  size={200}
+                  level="H"
+                  fgColor="#1a1a2e"
+                  bgColor="#ffffff"
+                />
               </div>
             </div>
 
@@ -171,6 +198,18 @@ export default function CreateGameModal({ profile, onClose, onCreated }: CreateG
               <button onClick={handleCopy} className="secondary-button">Copy Code</button>
               <button onClick={handleDownloadQr} className="secondary-button">Download QR</button>
               <button onClick={handleGoToGame} className="primary-button">Go to Game</button>
+            </div>
+
+            {/* Hidden high-res canvas used only for PNG download */}
+            <div className="hidden">
+              <QRCodeCanvas
+                ref={qrDownloadRef}
+                value={`STACKIT:${createdGame?.code}`}
+                size={600}
+                level="H"
+                fgColor="#1a1a2e"
+                bgColor="#ffffff"
+              />
             </div>
           </div>
         )}
