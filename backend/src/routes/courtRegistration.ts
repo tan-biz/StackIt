@@ -3,9 +3,22 @@ import multer from 'multer'
 import { z } from 'zod'
 import nodemailer from 'nodemailer'
 import { supabase } from '../lib/supabase'
+import { adminAuthMiddleware } from '../middleware/adminAuth'
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 const router = Router()
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } })
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed.'))
+    }
+  },
+})
 
 const registrationSchema = z.object({
   name: z.string().min(1),
@@ -96,7 +109,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/requests', async (_req, res) => {
+router.get('/requests', adminAuthMiddleware, async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('court_registration_requests')
@@ -104,17 +117,11 @@ router.get('/requests', async (_req, res) => {
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
 
-    if (error) {
-      throw error
-    }
-
+    if (error) throw error
     res.json(data)
   } catch (error: any) {
     console.error('Error fetching court registration requests:', error)
-    res.status(500).json({
-      error: 'Failed to fetch court registration requests',
-      details: error?.message || String(error),
-    })
+    res.status(500).json({ error: 'Failed to fetch court registration requests' })
   }
 })
 
@@ -229,7 +236,7 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 })
 
-router.post('/create', async (req, res) => {
+router.post('/create', adminAuthMiddleware, async (req, res) => {
   const parsed = createCourtSchema.safeParse({
     ...req.body,
     courtCount: Number(req.body.courtCount),
@@ -282,7 +289,7 @@ router.post('/create', async (req, res) => {
   }
 });
 
-router.post('/requests/:id/reject', async (req, res) => {
+router.post('/requests/:id/reject', adminAuthMiddleware, async (req, res) => {
   const requestId = req.params.id
 
   if (!requestId) {
