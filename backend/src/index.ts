@@ -15,14 +15,26 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 4001
 const configuredFrontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000'
-const allowedOrigins = new Set([configuredFrontendOrigin, 'http://localhost:3000', 'http://localhost:3001'])
+const configuredFrontendOrigins = (process.env.FRONTEND_URLS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean)
+const allowedOrigins = new Set([
+  configuredFrontendOrigin,
+  ...configuredFrontendOrigins,
+  'http://localhost:3000',
+  'http://localhost:3001',
+])
+const allowVercelPreview = process.env.ALLOW_VERCEL_PREVIEW !== 'false'
+const isAllowedVercelOrigin = (origin: string) =>
+  /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin) || /^https:\/\/[a-z0-9-]+-git-[a-z0-9-]+-[a-z0-9-]+\.vercel\.app$/i.test(origin)
 
 // Middleware
 app.use(helmet())
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
+      if (!origin || allowedOrigins.has(origin) || (allowVercelPreview && isAllowedVercelOrigin(origin))) {
         callback(null, true)
         return
       }
