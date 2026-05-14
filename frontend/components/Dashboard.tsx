@@ -5,7 +5,6 @@ import { formatDistanceToNow } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import CreateGameModal from './CreateGameModal'
 import JoinGameModal from './JoinGameModal'
-import { publicBackendUrl } from '@/lib/backendUrl'
 
 interface DashboardProps {
   profile: { id: string; name: string; nickname: string }
@@ -43,12 +42,7 @@ export default function Dashboard({ profile }: DashboardProps) {
 
   const loadCourtsCount = async () => {
     try {
-      const backendUrl = publicBackendUrl()
-      if (!backendUrl) {
-        setCourtsCount(0)
-        return
-      }
-      const response = await fetch(`${backendUrl}/api/court-registration`)
+      const response = await fetch('/api/courts')
       if (!response.ok) {
         setCourtsCount(0)
         return

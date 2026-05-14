@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import LoadingScreen from '@/components/LoadingScreen';
 import CourtRegistrationModal from '@/components/CourtRegistrationModal';
-import { publicBackendUrl } from '@/lib/backendUrl';
 
 interface Court {
   id: string;
@@ -57,11 +56,7 @@ export default function CourtsPage() {
   useEffect(() => {
     const fetchCourts = async () => {
       try {
-        const backendUrl = publicBackendUrl();
-        if (!backendUrl) {
-          throw new Error('Missing NEXT_PUBLIC_BACKEND_URL');
-        }
-        const response = await fetch(`${backendUrl}/api/court-registration`);
+        const response = await fetch('/api/courts');
 
         if (!response.ok) {
           throw new Error('Unable to load courts');

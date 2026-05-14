@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isAdminAuthenticated, backendUrl, adminSecretKey } from '@/lib/adminAuth'
+import { isAdminAuthenticated } from '@/lib/adminAuth'
+import { supabaseServer } from '@/lib/supabaseServer'
 
 export async function POST(
   req: NextRequest,
@@ -9,14 +10,17 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const res = await fetch(
-    `${backendUrl()}/api/court-registration/requests/${params.id}/reject`,
-    {
-      method: 'POST',
-      headers: { 'x-admin-key': adminSecretKey() },
-    },
-  )
+  const { error } = await supabaseServer
+    .from('court_registration_requests')
+    .update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', params.id)
 
-  const data = await res.json()
-  return NextResponse.json(data, { status: res.status })
+  if (error) {
+    return NextResponse.json({ error: 'Failed to reject request' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
 }

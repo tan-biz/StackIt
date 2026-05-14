@@ -27,13 +27,3 @@ export function isAdminAuthenticated(req: NextRequest): boolean {
     return false
   }
 }
-
-/** Backend URL used by server-side proxy routes (never exposed to the browser). */
-export function backendUrl(): string {
-  return process.env.BACKEND_URL || 'http://localhost:4000'
-}
-
-/** Admin secret key forwarded to the backend via x-admin-key header. */
-export function adminSecretKey(): string {
-  return process.env.ADMIN_SECRET_KEY || ''
-}

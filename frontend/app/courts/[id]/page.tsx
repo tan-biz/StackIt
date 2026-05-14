@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import LoadingScreen from '@/components/LoadingScreen'
-import { publicBackendUrl } from '@/lib/backendUrl'
 
 interface CourtDetail {
   id: string
@@ -31,11 +30,7 @@ export default function CourtDetailPage({ params }: CourtDetailPageProps) {
   useEffect(() => {
     const fetchCourt = async () => {
       try {
-        const backendUrl = publicBackendUrl()
-        if (!backendUrl) {
-          throw new Error('Missing NEXT_PUBLIC_BACKEND_URL')
-        }
-        const response = await fetch(`${backendUrl}/api/court-registration/${params.id}`)
+        const response = await fetch(`/api/courts/${params.id}`)
 
         if (!response.ok) {
           throw new Error('Failed to fetch court details')

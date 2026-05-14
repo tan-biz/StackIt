@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { publicBackendUrl } from '@/lib/backendUrl'
 
 interface CourtRegistrationModalProps {
   onClose: () => void
@@ -42,12 +41,7 @@ export default function CourtRegistrationModal({ onClose }: CourtRegistrationMod
       return
     }
 
-    const backendUrl = publicBackendUrl()
-    if (!backendUrl) {
-      setError('App config is missing NEXT_PUBLIC_BACKEND_URL.')
-      return
-    }
-    const apiUrl = `${backendUrl}/api/court-registration`
+    const apiUrl = '/api/court-registration'
 
     const formData = new FormData()
     formData.append('name', name.trim())
