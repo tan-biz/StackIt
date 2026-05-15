@@ -156,3 +156,8 @@ npm run build
 
 ### Database
 Already hosted on Supabase — no additional setup needed.
+
+### ERD
+![Logo](images/logo.png)
+
+
