@@ -158,6 +158,6 @@ npm run build
 Already hosted on Supabase — no additional setup needed.
 
 ### ERD
-![Logo](images/logo.png)
+![Logo](Screenshot 2026-05-15 094746.png)
 
 
